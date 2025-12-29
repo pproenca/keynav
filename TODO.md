@@ -222,15 +222,15 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 
 ### P2 - Keyboard Layout Support
 
-- [ ] **CJKV Keyboard Detection**
-  - Detect Chinese, Japanese, Korean, Vietnamese layouts
-  - Language codes: "ko", "ja", "vi", "zh*"
-  - Tests needed: `CJKVKeyboardTests.swift`
+- [x] **CJKV Keyboard Detection**
+  - [x] Detect Chinese, Japanese, Korean, Vietnamese layouts
+  - [x] Language codes: "ko", "ja", "vi", "zh*"
+  - Tests: `CJKVKeyboardTests.swift` (7 tests)
 
-- [ ] **Input Source Switching**
-  - Programmatic input source switching
-  - Read shortcut config from `com.apple.symbolichotkeys`
-  - Tests needed: `InputSourceSwitchingTests.swift`
+- [x] **Input Source Switching**
+  - [x] Programmatic input source switching
+  - [x] Read shortcut config from `com.apple.symbolichotkeys`
+  - Tests: `InputSourceSwitchingTests.swift` (7 tests)
 
 ---
 
@@ -296,18 +296,18 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 
 ### P2 - Code Organization
 
-- [ ] **Service-based Architecture**
-  - `QueryMenuBarExtrasService`
-  - `QueryMenuBarItemsService`
-  - `QueryNotificationCenterItemsService`
-  - `QueryWindowService`
-  - `TraverseElementServiceFinder`
-  - Current: Monolithic `ElementTraversal`
+- [x] **Service-based Architecture**
+  - [x] `QueryMenuBarExtrasService`
+  - [x] `QueryMenuBarItemsService`
+  - [x] `QueryNotificationCenterItemsService`
+  - [x] `QueryWindowService`
+  - [x] `TraverseElementServiceFinder`
+  - Tests: `ServiceArchitectureTests.swift` (14 tests)
 
-- [ ] **Mode Controller Protocol**
-  - Formalize `ModeController` protocol
-  - Better separation of concerns
-  - Tests needed: Protocol conformance tests
+- [x] **Mode Controller Protocol**
+  - [x] Formalize `ModeController` protocol
+  - [x] Better separation of concerns
+  - Tests: `ModeControllerTests.swift` (15 tests)
 
 ---
 
@@ -320,10 +320,10 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 | Accessibility | 0 | ~~4~~ 0 | ~~2~~ 0 | 0 | 6 | 6 ✓ |
 | Activation | 0 | ~~1~~ 0 | ~~2~~ 0 | 0 | 3 | 3 ✓ |
 | Preferences | 0 | ~~2~~ 0 | ~~1~~ 0 | 0 | 3 | 3 ✓ |
-| Input Handling | 0 | 0 | 2 | 0 | 2 | 0 |
+| Input Handling | 0 | 0 | ~~2~~ 0 | 0 | 2 | 2 ✓ |
 | Visual | 0 | 0 | ~~2~~ 0 | 0 | 2 | 2 ✓ |
-| Architecture | 0 | 0 | 2 | 0 | 2 | 0 |
-| **Total** | ~~**3**~~ **0** | ~~**16**~~ **0** | ~~**17**~~ **4** | **0** | **36** | **32 ✓** |
+| Architecture | 0 | 0 | ~~2~~ 0 | 0 | 2 | 2 ✓ |
+| **Total** | ~~**3**~~ **0** | ~~**16**~~ **0** | ~~**17**~~ **0** | **0** | **36** | **36 ✓** |
 
 ---
 
@@ -391,8 +391,12 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 - ScrollKeyPrefs (9 tests) ← NEW: scroll key prefs
 - Trie (14 tests) ← NEW
 - InputState (13 tests) ← NEW
+- CJKVKeyboard (7 tests) ← NEW
+- InputSourceSwitching (7 tests) ← NEW
+- ServiceArchitecture (14 tests) ← NEW
+- ModeController (15 tests) ← NEW
 
-**Total: 304 tests** ← was 278
+**Total: 347 tests** ← was 318
 
 **Vimac has tests for:**
 - InputState (10 tests)

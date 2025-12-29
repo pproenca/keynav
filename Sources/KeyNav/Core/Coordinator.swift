@@ -44,6 +44,10 @@ final class Coordinator {
             mode = scrollMode
         case .search:
             mode = searchMode
+        case .normal:
+            // Normal mode has no special behavior, just deactivate
+            deactivateCurrentMode()
+            return
         }
 
         currentMode = mode
