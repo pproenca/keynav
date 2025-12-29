@@ -13,22 +13,16 @@ final class HintMode: Mode {
     weak var delegate: HintModeDelegate?
 
     private let accessibilityEngine = AccessibilityEngine()
-    private let hintGenerator = HintLabelGenerator()
-    private let fuzzyMatcher = FuzzyMatcher()
+    private let logic = HintModeLogic()
 
     private var overlayWindow: OverlayWindow?
     private var hintView: HintView?
     private var searchBarView: SearchBarView?
 
-    private var elements: [ActionableElement] = []
-    private var filteredElements: [ActionableElement] = []
-    private var hintLabels: [String] = []
-    private var currentQuery = ""
-    private var typedHintChars = ""
-
     func activate() {
         guard !isActive else { return }
         isActive = true
+        logic.reset()
 
         setupOverlay()
         loadElements()
@@ -42,11 +36,7 @@ final class HintMode: Mode {
         overlayWindow = nil
         hintView = nil
         searchBarView = nil
-        elements = []
-        filteredElements = []
-        hintLabels = []
-        currentQuery = ""
-        typedHintChars = ""
+        logic.reset()
 
         delegate?.hintModeDidDeactivate()
     }
@@ -54,61 +44,24 @@ final class HintMode: Mode {
     func handleKeyDown(_ event: NSEvent) -> Bool {
         guard isActive else { return false }
 
-        // Escape to cancel
-        if event.keyCode == 53 {
+        let result = logic.handleKeyCode(event.keyCode, characters: event.characters)
+        return processResult(result)
+    }
+
+    private func processResult(_ result: HintModeLogic.KeyResult) -> Bool {
+        switch result {
+        case .ignored:
+            return false
+        case .handled:
+            updateHintDisplay()
+            return true
+        case .deactivate:
             deactivate()
             return true
-        }
-
-        // Backspace
-        if event.keyCode == 51 {
-            if !typedHintChars.isEmpty {
-                typedHintChars.removeLast()
-            } else if !currentQuery.isEmpty {
-                currentQuery.removeLast()
-                updateFilteredElements()
-            }
-            updateHints()
+        case .selectElement(let element):
+            selectElement(element)
             return true
         }
-
-        // Regular character
-        if let chars = event.characters?.uppercased(), chars.count == 1 {
-            let char = chars.first!
-
-            // Check if this could be part of a hint
-            if isHintChar(char) && !filteredElements.isEmpty {
-                typedHintChars.append(char)
-
-                // Check for hint match
-                if let index = hintLabels.firstIndex(of: typedHintChars) {
-                    let element = filteredElements[index]
-                    selectElement(element)
-                    return true
-                }
-
-                // Check if this could still match
-                let possibleMatches = hintLabels.filter { $0.hasPrefix(typedHintChars) }
-                if possibleMatches.isEmpty {
-                    // Not a hint, treat as search query
-                    typedHintChars = ""
-                    currentQuery.append(Character(chars.lowercased()))
-                    updateFilteredElements()
-                }
-
-                updateHints()
-                return true
-            } else {
-                // Search character
-                currentQuery.append(Character(chars.lowercased()))
-                typedHintChars = ""
-                updateFilteredElements()
-                updateHints()
-                return true
-            }
-        }
-
-        return false
     }
 
     private func setupOverlay() {
@@ -132,34 +85,20 @@ final class HintMode: Mode {
 
     private func loadElements() {
         accessibilityEngine.getActionableElements { [weak self] elements in
-            self?.elements = elements
-            self?.filteredElements = elements
-            self?.updateHints()
+            guard let self = self else { return }
+            self.logic.setElements(elements)
+            self.updateHintDisplay()
         }
     }
 
-    private func updateFilteredElements() {
-        filteredElements = fuzzyMatcher.filterAndSort(elements: elements, query: currentQuery)
-        typedHintChars = ""
-
-        // Auto-select if single match
-        if filteredElements.count == 1 && !currentQuery.isEmpty {
-            selectElement(filteredElements[0])
-        }
-    }
-
-    private func updateHints() {
-        hintLabels = hintGenerator.generate(count: filteredElements.count)
-
-        let hints = zip(filteredElements, hintLabels).map { element, label -> HintViewModel in
-            let matchRange = fuzzyMatcher.matchRange(query: currentQuery, in: element.label)
+    private func updateHintDisplay() {
+        let hints = zip(logic.filteredElements, logic.hintLabels).map { element, label -> HintViewModel in
             return HintViewModel(
                 label: label,
                 frame: element.frame,
-                matchedRange: matchRange
+                matchedRange: nil
             )
         }
-
         hintView?.updateHints(hints)
     }
 
@@ -176,10 +115,11 @@ final class HintMode: Mode {
 
 extension HintMode: SearchBarViewDelegate {
     func searchBarDidChangeText(_ text: String) {
-        currentQuery = text.lowercased()
-        typedHintChars = ""
-        updateFilteredElements()
-        updateHints()
+        if let result = logic.handleSearchTextChange(text) {
+            _ = processResult(result)
+        } else {
+            updateHintDisplay()
+        }
     }
 
     func searchBarDidPressEscape() {
@@ -187,8 +127,8 @@ extension HintMode: SearchBarViewDelegate {
     }
 
     func searchBarDidPressEnter() {
-        if let first = filteredElements.first {
-            selectElement(first)
+        if let result = logic.handleEnter() {
+            _ = processResult(result)
         }
     }
 
@@ -198,5 +138,38 @@ extension HintMode: SearchBarViewDelegate {
 
     func searchBarDidPressArrowDown() {
         // Could implement selection cycling
+    }
+
+    func searchBarShouldConsumeKeyEvent(_ event: NSEvent) -> Bool {
+        guard isActive else { return false }
+
+        // Check if this is a hint character that matches a current hint
+        guard let chars = event.characters?.uppercased(), chars.count == 1, let char = chars.first else {
+            return false
+        }
+
+        // Only intercept hint chars when search field is empty or we're building a hint sequence
+        if isHintChar(char) && logic.filteredElements.count > 0 {
+            // Check if this char would match or could match a hint
+            let potentialHint = logic.typedHintChars + String(char)
+
+            // Check for exact match
+            if logic.hintLabels.contains(potentialHint) {
+                let result = logic.handleKeyCode(event.keyCode, characters: event.characters)
+                _ = processResult(result)
+                return true
+            }
+
+            // Check if could be prefix of a longer hint
+            let couldMatch = logic.hintLabels.contains { $0.hasPrefix(potentialHint) }
+            if couldMatch {
+                let result = logic.handleKeyCode(event.keyCode, characters: event.characters)
+                _ = processResult(result)
+                return true
+            }
+        }
+
+        // Let the character go to the text field for search
+        return false
     }
 }

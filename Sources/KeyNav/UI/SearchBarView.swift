@@ -7,14 +7,25 @@ protocol SearchBarViewDelegate: AnyObject {
     func searchBarDidPressEnter()
     func searchBarDidPressArrowUp()
     func searchBarDidPressArrowDown()
+
+    /// Called when a key is pressed. Return true to consume the event (don't insert into text field).
+    /// Use this to intercept hint characters like A, S, D, F, etc.
+    func searchBarShouldConsumeKeyEvent(_ event: NSEvent) -> Bool
+}
+
+// Default implementation - don't consume any keys
+extension SearchBarViewDelegate {
+    func searchBarShouldConsumeKeyEvent(_ event: NSEvent) -> Bool {
+        return false
+    }
 }
 
 final class SearchBarView: NSView {
     weak var delegate: SearchBarViewDelegate?
 
-    private let textField: NSTextField = {
-        let field = NSTextField()
-        field.placeholderString = "Type to search..."
+    private let textField: HintTextField = {
+        let field = HintTextField()
+        field.placeholderString = "Type to search or press hint key..."
         field.font = NSFont.systemFont(ofSize: 18)
         field.isBezeled = false
         field.drawsBackground = false
@@ -67,6 +78,7 @@ final class SearchBarView: NSView {
         ])
 
         textField.delegate = self
+        textField.hintDelegate = self
     }
 
     func focus() {
@@ -101,5 +113,11 @@ extension SearchBarView: NSTextFieldDelegate {
             return true
         }
         return false
+    }
+}
+
+extension SearchBarView: HintTextFieldDelegate {
+    func hintTextField(_ textField: HintTextField, shouldConsumeKeyEvent event: NSEvent) -> Bool {
+        return delegate?.searchBarShouldConsumeKeyEvent(event) ?? false
     }
 }
