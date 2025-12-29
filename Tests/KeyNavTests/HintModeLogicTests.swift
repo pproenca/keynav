@@ -59,9 +59,10 @@ final class HintModeLogicTests: XCTestCase {
         // Press 'A' - should select first element (Save)
         let result = logic.handleKeyCode(0, characters: "a")
 
-        if case .selectElement(let element) = result {
+        if case .selectElement(let element, let clickType) = result {
             XCTAssertEqual(element.label, "Save")
             XCTAssertEqual(element.identifier, "save-btn")
+            XCTAssertEqual(clickType, .leftClick)
         } else {
             XCTFail("Expected selectElement result, got \(result)")
         }
@@ -73,7 +74,7 @@ final class HintModeLogicTests: XCTestCase {
         // Press 'S' - should select second element (Cancel)
         let result = logic.handleKeyCode(1, characters: "s")
 
-        if case .selectElement(let element) = result {
+        if case .selectElement(let element, _) = result {
             XCTAssertEqual(element.label, "Cancel")
         } else {
             XCTFail("Expected selectElement result, got \(result)")
@@ -86,7 +87,7 @@ final class HintModeLogicTests: XCTestCase {
         // Press 'D' - should select third element (OK)
         let result = logic.handleKeyCode(2, characters: "d")
 
-        if case .selectElement(let element) = result {
+        if case .selectElement(let element, _) = result {
             XCTAssertEqual(element.label, "OK")
         } else {
             XCTFail("Expected selectElement result, got \(result)")
@@ -99,7 +100,7 @@ final class HintModeLogicTests: XCTestCase {
         // Press 'F' - should select fourth element (Apply)
         let result = logic.handleKeyCode(3, characters: "f")
 
-        if case .selectElement(let element) = result {
+        if case .selectElement(let element, _) = result {
             XCTAssertEqual(element.label, "Apply")
         } else {
             XCTFail("Expected selectElement result, got \(result)")
@@ -113,6 +114,15 @@ final class HintModeLogicTests: XCTestCase {
 
         // Press Escape (keyCode 53)
         let result = logic.handleKeyCode(53, characters: nil)
+
+        XCTAssertEqual(result, .deactivate)
+    }
+
+    func testCtrlLeftBracketDeactivates() {
+        logic.setElements(createTestElements())
+
+        // Press Ctrl+[ (keyCode 33 with control modifier) - Vim-style escape
+        let result = logic.handleKeyCode(33, characters: "[", modifiers: .control)
 
         XCTAssertEqual(result, .deactivate)
     }
@@ -143,7 +153,7 @@ final class HintModeLogicTests: XCTestCase {
         // Search for "save" - should auto-select since single match
         let result = logic.handleSearchTextChange("save")
 
-        if case .selectElement(let element) = result {
+        if case .selectElement(let element, _) = result {
             XCTAssertEqual(element.label, "Save")
         } else {
             XCTFail("Expected auto-select of single match")
@@ -219,7 +229,7 @@ final class HintModeLogicTests: XCTestCase {
 
         let result = logic.handleEnter()
 
-        if case .selectElement(let element) = result {
+        if case .selectElement(let element, _) = result {
             XCTAssertEqual(element.label, "Cancel")
         } else {
             XCTFail("Expected selectElement on Enter")
@@ -252,7 +262,7 @@ final class HintModeLogicTests: XCTestCase {
 
         // Type 'A' - immediately selects element 0 (single char hint)
         let result1 = logic.handleKeyCode(0, characters: "a")
-        if case .selectElement(let element) = result1 {
+        if case .selectElement(let element, _) = result1 {
             XCTAssertEqual(element.identifier, "btn-0")
         } else {
             XCTFail("Expected selectElement for 'A' hint, got \(result1)")
@@ -307,24 +317,94 @@ final class HintModeLogicTests: XCTestCase {
         // Press lowercase 'a' - should still select first element
         let result = logic.handleKeyCode(0, characters: "a")
 
-        if case .selectElement(let element) = result {
+        if case .selectElement(let element, _) = result {
             XCTAssertEqual(element.label, "Save")
         } else {
             XCTFail("Expected selectElement for lowercase 'a'")
         }
     }
-}
 
-// MARK: - KeyResult Equatable for testing
+    // MARK: - Hint Rotation Tests (Space bar cycles through hints at same position)
 
-extension HintModeLogic.KeyResult: Equatable {
-    public static func == (lhs: HintModeLogic.KeyResult, rhs: HintModeLogic.KeyResult) -> Bool {
-        switch (lhs, rhs) {
-        case (.ignored, .ignored): return true
-        case (.handled, .handled): return true
-        case (.deactivate, .deactivate): return true
-        case (.selectElement(let a), .selectElement(let b)): return a == b
-        default: return false
+    func testSpacebarCyclesSelectedHint() {
+        // Create overlapping elements (same position)
+        let overlappingElements = [
+            ActionableElement(role: "AXButton", label: "Overlay1", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "btn-1"),
+            ActionableElement(role: "AXButton", label: "Overlay2", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "btn-2"),
+            ActionableElement(role: "AXButton", label: "Other", frame: CGRect(x: 200, y: 200, width: 50, height: 50), actions: ["AXPress"], identifier: "btn-3"),
+        ]
+        logic.setElements(overlappingElements)
+
+        // Initially should have 3 hints
+        XCTAssertEqual(logic.hintLabels.count, 3)
+
+        // Type 'A' to start selecting first hint
+        _ = logic.handleKeyCode(0, characters: "a")
+
+        // Space should cycle to next hint at same position
+        let result = logic.handleSpace()
+
+        XCTAssertEqual(result, .handled)
+        XCTAssertEqual(logic.selectedHintIndex, 1)
+    }
+
+    func testSpacebarWrapsAroundHints() {
+        let elements = [
+            ActionableElement(role: "AXButton", label: "A", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "a"),
+            ActionableElement(role: "AXButton", label: "B", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "b"),
+        ]
+        logic.setElements(elements)
+
+        // Select first hint
+        _ = logic.handleKeyCode(0, characters: "a")
+
+        // Press space twice - should wrap back to first
+        _ = logic.handleSpace()
+        XCTAssertEqual(logic.selectedHintIndex, 1)
+
+        _ = logic.handleSpace()
+        XCTAssertEqual(logic.selectedHintIndex, 0)
+    }
+
+    func testSpacebarWithNoTypedHintDoesNothing() {
+        logic.setElements(createTestElements())
+
+        // Space without typing a hint should be ignored
+        let result = logic.handleSpace()
+
+        XCTAssertEqual(result, .ignored)
+    }
+
+    func testEnterSelectsCurrentlyRotatedHint() {
+        let elements = [
+            ActionableElement(role: "AXButton", label: "First", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "first"),
+            ActionableElement(role: "AXButton", label: "Second", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "second"),
+        ]
+        logic.setElements(elements)
+
+        // Type partial hint 'A' (but don't complete it if multi-char)
+        // For single char hints, we need multi-element scenario
+        // Actually, with 2 elements we get A, S as hints
+        // Let's make more elements to get multi-char hints
+
+        var manyElements: [ActionableElement] = []
+        for i in 0..<20 {
+            manyElements.append(ActionableElement(role: "AXButton", label: "Button \(i)", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "btn-\(i)"))
+        }
+        logic.setElements(manyElements)
+
+        // First hints are single char A, S, D, F...
+        // Type 'A' and press space to rotate
+        _ = logic.handleKeyCode(0, characters: "a")
+        _ = logic.handleSpace()
+
+        // Now enter should select the rotated element (index 1)
+        let result = logic.handleEnter()
+
+        if case .selectElement(let element, _) = result {
+            XCTAssertEqual(element.identifier, "btn-1")
+        } else {
+            XCTFail("Expected selectElement result")
         }
     }
 }

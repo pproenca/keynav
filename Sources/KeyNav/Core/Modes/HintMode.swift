@@ -3,28 +3,46 @@ import AppKit
 
 protocol HintModeDelegate: AnyObject {
     func hintModeDidDeactivate()
-    func hintModeDidSelectElement(_ element: ActionableElement)
+    func hintModeDidSelectElement(_ element: ActionableElement, clickType: ClickType)
 }
 
-final class HintMode: Mode {
+final class HintMode: Mode, KeyboardEventCaptureDelegate {
     let type: ModeType = .hint
     private(set) var isActive = false
 
     weak var delegate: HintModeDelegate?
 
-    private let accessibilityEngine = AccessibilityEngine()
+    private let accessibilityEngine: AccessibilityEngineProtocol
+    private let keyboardCapture: KeyboardEventCapture
     private let logic = HintModeLogic()
 
     private var overlayWindow: OverlayWindow?
     private var hintView: HintView?
-    private var searchBarView: SearchBarView?
+    private var inputDisplayView: InputDisplayView?
+
+    /// Default initializer for production use
+    convenience init() {
+        self.init(
+            accessibilityEngine: AccessibilityEngine(),
+            keyboardCapture: GlobalKeyboardEventCapture()
+        )
+    }
+
+    /// Initializer with dependency injection for testing
+    init(accessibilityEngine: AccessibilityEngineProtocol, keyboardCapture: KeyboardEventCapture) {
+        self.accessibilityEngine = accessibilityEngine
+        self.keyboardCapture = keyboardCapture
+        self.keyboardCapture.delegate = self
+    }
 
     func activate() {
         guard !isActive else { return }
         isActive = true
         logic.reset()
 
+        CursorManager.shared.hideCursor()
         setupOverlay()
+        keyboardCapture.startCapturing()
         loadElements()
     }
 
@@ -32,34 +50,45 @@ final class HintMode: Mode {
         guard isActive else { return }
         isActive = false
 
+        CursorManager.shared.showCursor()
+        keyboardCapture.stopCapturing()
         overlayWindow?.dismiss()
         overlayWindow = nil
         hintView = nil
-        searchBarView = nil
+        inputDisplayView = nil
         logic.reset()
 
         delegate?.hintModeDidDeactivate()
     }
 
     func handleKeyDown(_ event: NSEvent) -> Bool {
+        // Not used anymore - we use keyboardCapture instead
+        return false
+    }
+
+    // MARK: - KeyboardEventCaptureDelegate
+
+    func keyboardEventCapture(_ capture: KeyboardEventCapture, didReceiveKeyDown keyCode: UInt16, characters: String?, modifiers: KeyModifiers) -> Bool {
         guard isActive else { return false }
 
-        let result = logic.handleKeyCode(event.keyCode, characters: event.characters)
+        let result = logic.handleKeyCode(keyCode, characters: characters, modifiers: modifiers)
         return processResult(result)
     }
+
+    // MARK: - Private
 
     private func processResult(_ result: HintModeLogic.KeyResult) -> Bool {
         switch result {
         case .ignored:
             return false
         case .handled:
-            updateHintDisplay()
+            updateDisplay()
             return true
         case .deactivate:
             deactivate()
             return true
-        case .selectElement(let element):
-            selectElement(element)
+        case .selectElement(let element, let clickType):
+            selectElement(element, clickType: clickType)
             return true
         }
     }
@@ -73,103 +102,52 @@ final class HintMode: Mode {
         hintView?.autoresizingMask = [.width, .height]
         contentView.addSubview(hintView!)
 
-        searchBarView = SearchBarView(frame: CGRect(x: 0, y: contentView.bounds.height - 100, width: contentView.bounds.width, height: 100))
-        searchBarView?.autoresizingMask = [.width, .minYMargin]
-        searchBarView?.delegate = self
-        contentView.addSubview(searchBarView!)
+        inputDisplayView = InputDisplayView(frame: contentView.bounds)
+        inputDisplayView?.autoresizingMask = [.width, .height]
+        contentView.addSubview(inputDisplayView!)
 
         overlayWindow?.contentView = contentView
         overlayWindow?.show()
-        searchBarView?.focus()
     }
 
     private func loadElements() {
         accessibilityEngine.getActionableElements { [weak self] elements in
             guard let self = self else { return }
             self.logic.setElements(elements)
-            self.updateHintDisplay()
+            self.updateDisplay()
         }
     }
 
-    private func updateHintDisplay() {
+    private func updateDisplay() {
+        // Update hint display
         let hints = zip(logic.filteredElements, logic.hintLabels).map { element, label -> HintViewModel in
+            // Highlight matched portion of hint
+            let typedCount = logic.typedHintChars.count
+            let matchedRange: Range<String.Index>? = typedCount > 0 ? label.startIndex..<label.index(label.startIndex, offsetBy: min(typedCount, label.count)) : nil
             return HintViewModel(
                 label: label,
                 frame: element.frame,
-                matchedRange: nil
+                matchedRange: matchedRange
             )
         }
         hintView?.updateHints(hints)
+
+        // Update input display
+        inputDisplayView?.text = logic.typedHintChars
     }
 
-    private func selectElement(_ element: ActionableElement) {
+    private func selectElement(_ element: ActionableElement, clickType: ClickType) {
         deactivate()
-        accessibilityEngine.performClick(on: element)
-        delegate?.hintModeDidSelectElement(element)
-    }
-
-    private func isHintChar(_ char: Character) -> Bool {
-        "ASDFGHJKLQWERUIO".contains(char)
-    }
-}
-
-extension HintMode: SearchBarViewDelegate {
-    func searchBarDidChangeText(_ text: String) {
-        if let result = logic.handleSearchTextChange(text) {
-            _ = processResult(result)
-        } else {
-            updateHintDisplay()
+        switch clickType {
+        case .leftClick:
+            accessibilityEngine.performClick(on: element)
+        case .rightClick:
+            accessibilityEngine.performRightClick(on: element)
+        case .doubleClick:
+            accessibilityEngine.performDoubleClick(on: element)
+        case .moveOnly:
+            accessibilityEngine.moveMouse(to: element)
         }
-    }
-
-    func searchBarDidPressEscape() {
-        deactivate()
-    }
-
-    func searchBarDidPressEnter() {
-        if let result = logic.handleEnter() {
-            _ = processResult(result)
-        }
-    }
-
-    func searchBarDidPressArrowUp() {
-        // Could implement selection cycling
-    }
-
-    func searchBarDidPressArrowDown() {
-        // Could implement selection cycling
-    }
-
-    func searchBarShouldConsumeKeyEvent(_ event: NSEvent) -> Bool {
-        guard isActive else { return false }
-
-        // Check if this is a hint character that matches a current hint
-        guard let chars = event.characters?.uppercased(), chars.count == 1, let char = chars.first else {
-            return false
-        }
-
-        // Only intercept hint chars when search field is empty or we're building a hint sequence
-        if isHintChar(char) && logic.filteredElements.count > 0 {
-            // Check if this char would match or could match a hint
-            let potentialHint = logic.typedHintChars + String(char)
-
-            // Check for exact match
-            if logic.hintLabels.contains(potentialHint) {
-                let result = logic.handleKeyCode(event.keyCode, characters: event.characters)
-                _ = processResult(result)
-                return true
-            }
-
-            // Check if could be prefix of a longer hint
-            let couldMatch = logic.hintLabels.contains { $0.hasPrefix(potentialHint) }
-            if couldMatch {
-                let result = logic.handleKeyCode(event.keyCode, characters: event.characters)
-                _ = processResult(result)
-                return true
-            }
-        }
-
-        // Let the character go to the text field for search
-        return false
+        delegate?.hintModeDidSelectElement(element, clickType: clickType)
     }
 }

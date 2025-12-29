@@ -8,6 +8,7 @@ protocol AccessibilityEngineProtocol {
     func performClick(on element: ActionableElement)
     func performDoubleClick(on element: ActionableElement)
     func performRightClick(on element: ActionableElement)
+    func moveMouse(to element: ActionableElement)
 }
 
 // Make AccessibilityEngine conform to the protocol
@@ -19,6 +20,7 @@ final class MockAccessibilityEngine: AccessibilityEngineProtocol {
     var clickedElements: [ActionableElement] = []
     var doubleClickedElements: [ActionableElement] = []
     var rightClickedElements: [ActionableElement] = []
+    var movedToElements: [ActionableElement] = []
 
     func getActionableElements(completion: @escaping ([ActionableElement]) -> Void) {
         completion(mockElements)
@@ -38,5 +40,9 @@ final class MockAccessibilityEngine: AccessibilityEngineProtocol {
 
     func performRightClick(on element: ActionableElement) {
         rightClickedElements.append(element)
+    }
+
+    func moveMouse(to element: ActionableElement) {
+        movedToElements.append(element)
     }
 }

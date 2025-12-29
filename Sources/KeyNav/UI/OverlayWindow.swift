@@ -16,7 +16,9 @@ final class OverlayWindow: NSPanel {
             defer: false
         )
 
-        self.level = .statusBar  // Above normal windows but below alerts
+        // Use a level above popUpMenu (101) so hints appear above dropdown menus
+        // CGWindowLevelForKey(.overlayWindow) = 102
+        self.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.overlayWindow)))
         self.backgroundColor = .clear
         self.isOpaque = false
         self.hasShadow = false
@@ -34,8 +36,9 @@ final class OverlayWindow: NSPanel {
         if let screenFrame = NSScreen.main?.frame {
             setFrame(screenFrame, display: true)
         }
-        // Make key and order front to receive keyboard events
-        makeKeyAndOrderFront(nil)
+        // Use orderFrontRegardless to show window without stealing focus
+        // This keeps menus open while displaying the overlay
+        orderFrontRegardless()
     }
 
     func dismiss() {

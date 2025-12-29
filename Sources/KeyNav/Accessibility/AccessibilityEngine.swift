@@ -20,10 +20,71 @@ final class AccessibilityEngine {
 
     func getActionableElementsSync() -> [ActionableElement] {
         guard PermissionManager.shared.isAccessibilityEnabled else { return [] }
-        guard let app = traversal.getFrontmostApplication() else { return [] }
-        guard let window = traversal.getFocusedWindow(from: app) else { return [] }
 
-        return traversal.traverseElements(from: window)
+        // Debug: print accessibility hierarchy (only in debug builds)
+        #if DEBUG
+        AccessibilityDebug.printFocusedElementHierarchy()
+        #endif
+
+        var allElements: [ActionableElement] = []
+
+        // Get frontmost app for menu bar and window elements
+        if let app = traversal.getFrontmostApplication() {
+            // 1. Menu bar items (File, Edit, View, etc.) - includes open menu items
+            let menuBarItems = traversal.getMenuBarItems(from: app)
+            allElements.append(contentsOf: menuBarItems)
+
+            // 2. CRITICAL: The focused "window" might BE the menu when a menu is open!
+            // Vimac's key insight: kAXFocusedWindowAttribute returns the menu itself
+            if let focusedWindow = traversal.getFocusedWindow(from: app) {
+                let focusedRole = traversal.getRole(of: focusedWindow)
+
+                // If the "focused window" is actually a menu, traverse it as a menu
+                if focusedRole == "AXMenu" {
+                    let menuElements = traversal.traverseMenuElements(from: focusedWindow)
+                    allElements.append(contentsOf: menuElements)
+                } else {
+                    // Normal window - traverse normally
+                    let windowElements = traversal.traverseElements(from: focusedWindow)
+                    allElements.append(contentsOf: windowElements)
+                }
+            }
+
+            // 3. Also check focused UI element for menu context
+            if let focusedElement = traversal.getFocusedUIElement(from: app) {
+                let focusedRole = traversal.getRole(of: focusedElement)
+
+                if focusedRole == "AXMenu" || focusedRole == "AXMenuItem" {
+                    let menuElements = traversal.traverseFromMenuRoot(focusedElement)
+                    allElements.append(contentsOf: menuElements)
+                }
+            }
+
+            // 4. Check for any additional open menu windows
+            let openMenuElements = traversal.getOpenMenuItems(from: app)
+            allElements.append(contentsOf: openMenuElements)
+        }
+
+        // 5. Menu bar extras (system tray: Wi-Fi, battery, clock, etc.)
+        let menuBarExtras = traversal.getMenuBarExtras()
+        allElements.append(contentsOf: menuBarExtras)
+
+        // 6. Notification center items (if visible)
+        let notificationItems = traversal.getNotificationCenterItems()
+        allElements.append(contentsOf: notificationItems)
+
+        // Remove duplicates based on frame (same position = same element)
+        var seen = Set<String>()
+        allElements = allElements.filter { element in
+            let key = "\(element.frame.origin.x),\(element.frame.origin.y),\(element.frame.width),\(element.frame.height)"
+            if seen.contains(key) {
+                return false
+            }
+            seen.insert(key)
+            return true
+        }
+
+        return allElements
     }
 
     func getAllWindowElements(completion: @escaping ([ActionableElement]) -> Void) {
@@ -62,23 +123,25 @@ final class AccessibilityEngine {
         } else if element.actions.contains("AXConfirm") {
             AXUIElementPerformAction(axElement, kAXConfirmAction as CFString)
         } else {
-            // Fallback: simulate mouse click at element center
-            let center = CGPoint(
-                x: element.frame.midX,
-                y: element.frame.midY
-            )
-            simulateClick(at: center)
+            // Fallback: simulate mouse click at optimal position for element type
+            let clickPoint = ClickPositionCalculator.clickPosition(for: element)
+            simulateClick(at: clickPoint)
         }
     }
 
     func performDoubleClick(on element: ActionableElement) {
-        let center = CGPoint(x: element.frame.midX, y: element.frame.midY)
-        simulateClick(at: center, clickCount: 2)
+        let clickPoint = ClickPositionCalculator.clickPosition(for: element)
+        simulateClick(at: clickPoint, clickCount: 2)
     }
 
     func performRightClick(on element: ActionableElement) {
-        let center = CGPoint(x: element.frame.midX, y: element.frame.midY)
-        simulateRightClick(at: center)
+        let clickPoint = ClickPositionCalculator.clickPosition(for: element)
+        simulateRightClick(at: clickPoint)
+    }
+
+    func moveMouse(to element: ActionableElement) {
+        let clickPoint = ClickPositionCalculator.clickPosition(for: element)
+        CGWarpMouseCursorPosition(clickPoint)
     }
 
     private func simulateClick(at point: CGPoint, clickCount: Int = 1) {

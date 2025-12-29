@@ -84,8 +84,8 @@ extension Coordinator: HintModeDelegate {
         stopEventMonitor()
     }
 
-    func hintModeDidSelectElement(_ element: ActionableElement) {
-        // Could log or trigger custom actions
+    func hintModeDidSelectElement(_ element: ActionableElement, clickType: ClickType) {
+        // Could log or trigger custom actions based on click type
     }
 }
 
