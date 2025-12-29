@@ -123,12 +123,12 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
   - [x] VS Code scrolls to bottom with Int32.max
   - Tests: `VSCodeScrollTests.swift` (7 tests)
 
-- [ ] **Scroll Area Detection**
-  - Query scroll areas via depth-first traversal
-  - Skip web areas (no scroll area children)
-  - Use `visibleRows` for tables/outlines
-  - Sort by surface area (largest first)
-  - Tests needed: `ScrollAreaDetectionTests.swift`
+- [x] **Scroll Area Detection**
+  - [x] Query scroll areas via depth-first traversal
+  - [x] Skip web areas (no scroll area children)
+  - [x] Use `visibleRows` for tables/outlines
+  - [x] Sort by surface area (largest first)
+  - Tests: `ScrollAreaDetectionTests.swift` (8 tests)
 
 ---
 
@@ -136,39 +136,39 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 
 ### P1 - Web Area Handling
 
-- [ ] **WebKit vs Chromium Compatibility**
-  - Multi-key search strategy for WebKit
-  - Single-key fallback for Chromium (~v90)
-  - Tests needed: `WebAreaTraversalTests.swift`
+- [x] **WebKit vs Chromium Compatibility**
+  - [x] Multi-key search strategy for WebKit
+  - [x] Single-key fallback for Chromium (~v90)
+  - Tests: `WebAreaTraversalTests.swift` (9 tests)
 
-- [ ] **Parameterized Search Predicates**
-  - Query: buttons, checkboxes, controls, graphics, links, radio groups, text fields
-  - Deduplication of results
-  - Tests needed: `SearchPredicateTests.swift`
+- [x] **Parameterized Search Predicates**
+  - [x] Query: buttons, checkboxes, controls, graphics, links, radio groups, text fields
+  - [x] Deduplication of results
+  - Tests: `SearchPredicateTests.swift` (9 tests)
 
 ### P1 - Window Handling
 
-- [ ] **Fullscreen Window Detection**
-  - Detect windows on secondary displays in fullscreen
-  - `NSScreen.main` returns wrong display in this case
-  - Calculate intersection area to find correct screen
-  - Tests needed: `FullscreenWindowTests.swift`
+- [x] **Fullscreen Window Detection**
+  - [x] Detect windows on secondary displays in fullscreen
+  - [x] `NSScreen.main` returns wrong display in this case
+  - [x] Calculate intersection area to find correct screen
+  - Tests: `FullscreenWindowTests.swift` (8 tests)
 
-- [ ] **Window Frame Boundary Handling**
-  - Account for windows extending beyond screen boundaries
-  - Tests needed: `WindowBoundaryTests.swift`
+- [x] **Window Frame Boundary Handling**
+  - [x] Account for windows extending beyond screen boundaries
+  - Tests: `WindowBoundaryTests.swift` (9 tests)
 
 ### P2 - Element Visibility
 
-- [ ] **Clipped Frame Calculation**
-  - Track visible portion of elements within scroll areas
-  - Intersect element frames with viewport bounds
-  - Tests needed: `ClippedFrameTests.swift`
+- [x] **Clipped Frame Calculation**
+  - [x] Track visible portion of elements within scroll areas
+  - [x] Intersect element frames with viewport bounds
+  - Tests: `ClippedFrameTests.swift` (8 tests)
 
-- [ ] **Table/Outline Optimization**
-  - Use `visibleRows` attribute instead of all children
-  - Improves performance for large tables
-  - Tests needed: `TableTraversalTests.swift`
+- [x] **Table/Outline Optimization**
+  - [x] Use `visibleRows` attribute instead of all children
+  - [x] Improves performance for large tables
+  - Tests: `TableTraversalTests.swift` (7 tests)
 
 ---
 
@@ -176,22 +176,22 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 
 ### P1 - Hold Key Activation
 
-- [ ] **Space Bar Hold-to-Activate**
-  - Hold spacebar for 0.25 seconds to activate
-  - Release before timeout replays original keypress
-  - Suppress auto-repeat events during hold
-  - Handle modifier edge case (Space down, Shift-Space up)
-  - Tests needed: `HoldKeyActivationTests.swift`
+- [x] **Space Bar Hold-to-Activate**
+  - [x] Hold spacebar for 0.25 seconds to activate
+  - [x] Release before timeout replays original keypress
+  - [x] Suppress auto-repeat events during hold
+  - [x] Handle modifier edge case (Space down, Shift-Space up)
+  - Tests: `HoldKeyActivationTests.swift` (12 tests)
 
 ### P2 - Activation Enhancements
 
-- [ ] **AX Enhanced UI Activation**
-  - `AXEnhancedUserInterfaceActivator` for better accessibility
-  - Tests needed: `EnhancedUIActivatorTests.swift`
+- [x] **AX Enhanced UI Activation**
+  - [x] `AXEnhancedUserInterfaceActivator` for better accessibility
+  - Tests: `EnhancedUIActivatorTests.swift` (7 tests)
 
-- [ ] **Manual Accessibility Activation**
-  - Fallback activation method
-  - Tests needed: `ManualActivatorTests.swift`
+- [x] **Manual Accessibility Activation**
+  - [x] Fallback activation method
+  - Tests: `ManualActivatorTests.swift` (7 tests)
 
 ---
 
@@ -199,22 +199,22 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 
 ### P1 - Core Preferences
 
-- [ ] **Custom Hint Characters**
-  - Default: "sadfjklewcmpgh"
-  - Validation: minimum 6 characters, all unique
-  - Tests needed: `HintCharacterPrefsTests.swift`
+- [x] **Custom Hint Characters**
+  - [x] Default: "sadfjklewcmpgh"
+  - [x] Validation: minimum 6 characters, all unique
+  - Tests: `HintCharacterPrefsTests.swift` (8 tests)
 
-- [ ] **Hint Text Size**
-  - Default: 11.0
-  - Validation: float between 0 (exclusive) and 100 (inclusive)
-  - Tests needed: `HintTextSizeTests.swift`
+- [x] **Hint Text Size**
+  - [x] Default: 11.0
+  - [x] Validation: float between 0 (exclusive) and 100 (inclusive)
+  - Tests: `HintTextSizeTests.swift` (9 tests)
 
 ### P2 - Scroll Preferences
 
-- [ ] **Scroll Key Bindings**
-  - Configurable scroll keys
-  - Validation: 4, 6, or 8 comma-separated unique sequences
-  - Tests needed: `ScrollKeyPrefsTests.swift`
+- [x] **Scroll Key Bindings**
+  - [x] Configurable scroll keys
+  - [x] Validation: 4, 6, or 8 comma-separated unique sequences
+  - Tests: `ScrollKeyPrefsTests.swift` (9 tests)
 
 ---
 
@@ -316,14 +316,14 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 | Category | P0 | P1 | P2 | P3 | Total | Done |
 |----------|----|----|----|----|-------|------|
 | Hint Mode | ~~2~~ 0 | ~~5~~ 0 | ~~4~~ 0 | 0 | 11 | 11 ✓ |
-| Scroll Mode | ~~1~~ 0 | ~~4~~ 0 | ~~2~~ 1 | 0 | 7 | 6 ✓ |
-| Accessibility | 0 | 4 | 2 | 0 | 6 | 0 |
-| Activation | 0 | 1 | 2 | 0 | 3 | 0 |
-| Preferences | 0 | 2 | 1 | 0 | 3 | 0 |
+| Scroll Mode | ~~1~~ 0 | ~~4~~ 0 | ~~2~~ 0 | 0 | 7 | 7 ✓ |
+| Accessibility | 0 | ~~4~~ 0 | ~~2~~ 0 | 0 | 6 | 6 ✓ |
+| Activation | 0 | ~~1~~ 0 | ~~2~~ 0 | 0 | 3 | 3 ✓ |
+| Preferences | 0 | ~~2~~ 0 | ~~1~~ 0 | 0 | 3 | 3 ✓ |
 | Input Handling | 0 | 0 | 2 | 0 | 2 | 0 |
 | Visual | 0 | 0 | ~~2~~ 0 | 0 | 2 | 2 ✓ |
 | Architecture | 0 | 0 | 2 | 0 | 2 | 0 |
-| **Total** | ~~**3**~~ **0** | ~~**16**~~ **7** | ~~**17**~~ **10** | **0** | **36** | **19 ✓** |
+| **Total** | ~~**3**~~ **0** | ~~**16**~~ **0** | ~~**17**~~ **4** | **0** | **36** | **32 ✓** |
 
 ---
 
@@ -376,10 +376,23 @@ Based on a comprehensive audit of Vimac's test files, source code, and feature s
 - ReverseScroll (5 tests) ← NEW: reversible scroll directions
 - ScrollTiming (7 tests) ← NEW: chunky vs smooth scrolling
 - VSCodeScroll (7 tests) ← NEW: VS Code compatibility
+- ScrollAreaDetection (8 tests) ← NEW: scroll area detection
+- WebAreaTraversal (9 tests) ← NEW: browser compatibility
+- SearchPredicate (9 tests) ← NEW: parameterized search
+- FullscreenWindow (8 tests) ← NEW: screen detection
+- WindowBoundary (9 tests) ← NEW: window boundary handling
+- ClippedFrame (8 tests) ← NEW: viewport clipping
+- TableTraversal (7 tests) ← NEW: table optimization
+- HoldKeyActivation (12 tests) ← NEW: hold-to-activate
+- EnhancedUIActivator (7 tests) ← NEW: enhanced UI activation
+- ManualActivator (7 tests) ← NEW: manual activation
+- HintCharacterPrefs (8 tests) ← NEW: custom hint chars
+- HintTextSizePrefs (9 tests) ← NEW: hint text size
+- ScrollKeyPrefs (9 tests) ← NEW: scroll key prefs
 - Trie (14 tests) ← NEW
 - InputState (13 tests) ← NEW
 
-**Total: 194 tests** ← was 187
+**Total: 304 tests** ← was 278
 
 **Vimac has tests for:**
 - InputState (10 tests)
