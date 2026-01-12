@@ -96,17 +96,21 @@ final class HintModeLogic {
         if isHintChar(char) && !filteredElements.isEmpty {
             typedHintChars.append(char)
 
-            // Check for exact hint match
-            if let index = hintLabels.firstIndex(of: typedHintChars), index < filteredElements.count {
+            // Find all hints that match or could match with more chars
+            let possibleMatches = hintLabels.filter { $0.hasPrefix(typedHintChars) }
+
+            // Only select if there's exactly ONE match and it's an exact match
+            if possibleMatches.count == 1,
+               let index = hintLabels.firstIndex(of: possibleMatches[0]),
+               index < filteredElements.count,
+               possibleMatches[0] == typedHintChars {
                 let element = filteredElements[index]
                 let clickType = determineClickType(from: modifiers)
                 return .selectElement(element, clickType)
             }
 
-            // Check if this could still match a multi-char hint
-            let possibleMatches = hintLabels.filter { $0.hasPrefix(typedHintChars) }
+            // If no possible matches, fall back to search query
             if possibleMatches.isEmpty {
-                // Not a hint prefix, treat as search query
                 typedHintChars = ""
                 currentQuery.append(Character(chars.lowercased()))
                 updateFilteredElements()

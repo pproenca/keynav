@@ -63,9 +63,25 @@ Download the latest `.dmg` from [GitHub Releases](https://github.com/yourusernam
 ```bash
 git clone https://github.com/yourusername/keynav.git
 cd keynav
+./scripts/build-app.sh
+```
+
+This creates `KeyNav.app` in the project directory. To grant accessibility permissions:
+
+1. Open **System Settings > Privacy & Security > Accessibility**
+2. Click **+** and add `KeyNav.app`
+3. Run with `open KeyNav.app`
+
+### Development Build
+
+For quick iteration without the app bundle:
+
+```bash
 swift build
 swift run
 ```
+
+Note: Running via `swift run` requires adding **Terminal.app** to Accessibility permissions instead.
 
 ## License
 

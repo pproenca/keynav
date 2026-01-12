@@ -16,6 +16,24 @@ struct HintViewModel {
 final class HintView: NSView {
     private var hints: [HintViewModel] = []
 
+    // Enable layer-backed rendering for GPU acceleration
+    override var wantsLayer: Bool {
+        get { true }
+        set {}
+    }
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.drawsAsynchronously = true
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        wantsLayer = true
+        layer?.drawsAsynchronously = true
+    }
+
     /// Background color: pale yellow RGB(255, 224, 112)
     var hintBackgroundColor: NSColor = NSColor(calibratedRed: 255/255.0, green: 224/255.0, blue: 112/255.0, alpha: 1.0)
     /// Unmatched (untyped) text color: black
@@ -62,11 +80,11 @@ final class HintView: NSView {
         // Draw background
         let backgroundPath = NSBezierPath(roundedRect: hintRect, xRadius: hintCornerRadius, yRadius: hintCornerRadius)
 
-        // Shadow
+        // Shadow (simplified for better performance)
         let shadow = NSShadow()
-        shadow.shadowColor = NSColor.black.withAlphaComponent(0.3)
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.2)
         shadow.shadowOffset = NSSize(width: 0, height: -1)
-        shadow.shadowBlurRadius = 3
+        shadow.shadowBlurRadius = 1
         shadow.set()
 
         hintBackgroundColor.setFill()

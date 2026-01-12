@@ -260,16 +260,13 @@ final class HintModeLogicTests: XCTestCase {
         XCTAssertEqual(logic.hintLabels[16], "AA")
         XCTAssertEqual(logic.hintLabels[17], "AS")
 
-        // Type 'A' - immediately selects element 0 (single char hint)
+        // Type 'A' - should NOT select because there are multiple matches (A, AA, AS, AD, AF)
         let result1 = logic.handleKeyCode(0, characters: "a")
-        if case .selectElement(let element, _) = result1 {
-            XCTAssertEqual(element.identifier, "btn-0")
-        } else {
-            XCTFail("Expected selectElement for 'A' hint, got \(result1)")
-        }
+        XCTAssertEqual(result1, .handled) // Waits for more input
+        XCTAssertEqual(logic.typedHintChars, "A")
     }
 
-    func testTwoCharHintSelection() {
+    func testTwoCharHintSelectionAfterTypingBothChars() {
         // Create 20 elements to trigger two-char hints
         var elements: [ActionableElement] = []
         for i in 0..<20 {
@@ -277,23 +274,52 @@ final class HintModeLogicTests: XCTestCase {
         }
         logic.setElements(elements)
 
-        // Filter to only show elements 16+ (which have two-char hints)
-        _ = logic.handleSearchTextChange("button 1")
+        // Type 'A' - waits because multiple matches exist
+        let result1 = logic.handleKeyCode(0, characters: "a")
+        XCTAssertEqual(result1, .handled)
 
-        // Now the first filtered element should have hint 'A'
-        // But if we filter to specific elements that only have 2-char hints...
+        // Type second 'A' - now only "AA" matches exactly
+        let result2 = logic.handleKeyCode(0, characters: "a")
+        if case .selectElement(let element, _) = result2 {
+            XCTAssertEqual(element.identifier, "btn-16") // AA is hint for element 16
+        } else {
+            XCTFail("Expected selectElement for 'AA' hint, got \(result2)")
+        }
+    }
 
-        // Actually, let's test the raw 2-char logic by resetting
-        logic.reset()
+    func testSingleCharHintSelectsImmediatelyWhenUnique() {
+        // With 5 elements, all hints are single-char and unique: A, S, D, F, G
+        logic.setElements(createTestElements())
+
+        // Type 'A' - should select immediately because 'A' is the only match
+        let result = logic.handleKeyCode(0, characters: "a")
+        if case .selectElement(let element, _) = result {
+            XCTAssertEqual(element.label, "Save")
+        } else {
+            XCTFail("Expected immediate selection for unique single-char hint")
+        }
+    }
+
+    func testTypingAWithSharedPrefixWaitsForMoreInput() {
+        // Create 20 elements - hints include A, AA, AS, AD, AF
+        var elements: [ActionableElement] = []
+        for i in 0..<20 {
+            elements.append(ActionableElement(role: "AXButton", label: "Button \(i)", frame: .zero, actions: ["AXPress"], identifier: "btn-\(i)"))
+        }
         logic.setElements(elements)
 
-        // To select element 16 (hint 'AA'), we need to type 'A' then 'A'
-        // But 'A' first matches element 0, so this test shows current behavior
-        // In current implementation, you cannot reach element 16 via hint because
-        // 'A' is consumed by element 0
+        // Type 'A' - should wait because A, AA, AS, AD, AF all match
+        let result = logic.handleKeyCode(0, characters: "a")
+        XCTAssertEqual(result, .handled)
+        XCTAssertEqual(logic.typedHintChars, "A")
 
-        // This test documents the current behavior - single chars have priority
-        XCTAssertEqual(logic.hintLabels[16], "AA")
+        // Now type 'S' to select AS (element 17)
+        let result2 = logic.handleKeyCode(1, characters: "s")
+        if case .selectElement(let element, _) = result2 {
+            XCTAssertEqual(element.identifier, "btn-17") // AS is hint for element 17
+        } else {
+            XCTFail("Expected selectElement for 'AS' hint")
+        }
     }
 
     // MARK: - Non-Hint Character Tests
@@ -376,27 +402,22 @@ final class HintModeLogicTests: XCTestCase {
     }
 
     func testEnterSelectsCurrentlyRotatedHint() {
-        let elements = [
-            ActionableElement(role: "AXButton", label: "First", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "first"),
-            ActionableElement(role: "AXButton", label: "Second", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "second"),
-        ]
-        logic.setElements(elements)
-
-        // Type partial hint 'A' (but don't complete it if multi-char)
-        // For single char hints, we need multi-element scenario
-        // Actually, with 2 elements we get A, S as hints
-        // Let's make more elements to get multi-char hints
-
+        // With 20 elements, typing 'A' waits for more input (A, AA, AS, AD, AF match)
+        // After typing 'A', we can rotate with space and select with enter
         var manyElements: [ActionableElement] = []
         for i in 0..<20 {
             manyElements.append(ActionableElement(role: "AXButton", label: "Button \(i)", frame: CGRect(x: 100, y: 100, width: 50, height: 50), actions: ["AXPress"], identifier: "btn-\(i)"))
         }
         logic.setElements(manyElements)
 
-        // First hints are single char A, S, D, F...
-        // Type 'A' and press space to rotate
-        _ = logic.handleKeyCode(0, characters: "a")
+        // Type 'A' - waits because multiple matches exist
+        let result1 = logic.handleKeyCode(0, characters: "a")
+        XCTAssertEqual(result1, .handled)
+        XCTAssertEqual(logic.typedHintChars, "A")
+
+        // Press space to rotate to next element
         _ = logic.handleSpace()
+        XCTAssertEqual(logic.selectedHintIndex, 1)
 
         // Now enter should select the rotated element (index 1)
         let result = logic.handleEnter()
