@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 APP_NAME="KeyNav"
 BUNDLE_DIR="$PROJECT_DIR/$APP_NAME.app"
+BUILD_DIR="$PROJECT_DIR/.build/release"
 
 echo "Building $APP_NAME..."
 cd "$PROJECT_DIR"
@@ -13,16 +14,26 @@ swift build -c release
 echo "Creating app bundle..."
 rm -rf "$BUNDLE_DIR"
 mkdir -p "$BUNDLE_DIR/Contents/MacOS"
+mkdir -p "$BUNDLE_DIR/Contents/Frameworks"
 mkdir -p "$BUNDLE_DIR/Contents/Resources"
 
 # Copy executable
-cp ".build/release/$APP_NAME" "$BUNDLE_DIR/Contents/MacOS/"
+cp "$BUILD_DIR/$APP_NAME" "$BUNDLE_DIR/Contents/MacOS/"
 
 # Copy Info.plist
 cp "Sources/KeyNav/Resources/Info.plist" "$BUNDLE_DIR/Contents/"
 
-# Sign the app (ad-hoc if no Developer ID)
+# Copy Sparkle.framework
+echo "Embedding Sparkle.framework..."
+cp -R "$BUILD_DIR/Sparkle.framework" "$BUNDLE_DIR/Contents/Frameworks/"
+
+# Update rpath so executable can find Sparkle in Frameworks directory
+echo "Updating library paths..."
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$BUNDLE_DIR/Contents/MacOS/$APP_NAME"
+
+# Sign the frameworks first, then the app
 echo "Signing app bundle..."
+codesign --force --sign - "$BUNDLE_DIR/Contents/Frameworks/Sparkle.framework" 2>/dev/null || true
 codesign --force --deep --sign - "$BUNDLE_DIR" 2>/dev/null || true
 
 echo ""
