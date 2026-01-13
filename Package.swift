@@ -28,6 +28,11 @@ let package = Package(
             name: "KeyNavTests",
             dependencies: ["KeyNav"],
             path: "Tests/KeyNavTests"
+        ),
+        .testTarget(
+            name: "KeyNavIntegrationTests",
+            dependencies: ["KeyNav"],
+            path: "Tests/KeyNavIntegrationTests"
         )
     ]
 )

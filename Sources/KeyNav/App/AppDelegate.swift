@@ -3,6 +3,26 @@ import AppKit
 import Combine
 import Sparkle
 
+// MARK: - Test Mode Configuration
+
+/// Configuration for test simulation modes, controlled via launch arguments.
+enum TestMode {
+    /// Check if running in UI testing mode
+    static var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains("--uitesting")
+    }
+
+    /// Check if permission should be simulated as denied
+    static var simulateNoPermission: Bool {
+        ProcessInfo.processInfo.arguments.contains("--simulate-no-permission")
+    }
+
+    /// Check if hotkey registration failure should be simulated
+    static var simulateHotkeyFailure: Bool {
+        ProcessInfo.processInfo.arguments.contains("--simulate-hotkey-failure")
+    }
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var onboardingWindow: NSWindow?
@@ -15,11 +35,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let errorIcon = "keyboard.badge.exclamationmark"
 
     override init() {
-        updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
-        )
+        // Skip Sparkle initialization in UI testing mode to avoid update prompts
+        if TestMode.isUITesting {
+            updaterController = SPUStandardUpdaterController(
+                startingUpdater: false,
+                updaterDelegate: nil,
+                userDriverDelegate: nil
+            )
+        } else {
+            updaterController = SPUStandardUpdaterController(
+                startingUpdater: true,
+                updaterDelegate: nil,
+                userDriverDelegate: nil
+            )
+        }
         super.init()
     }
 
@@ -134,6 +163,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Permission Check
 
     private func checkAccessibilityPermission() {
+        // Support test simulation of permission denied state
+        if TestMode.simulateNoPermission {
+            showOnboarding()
+            return
+        }
+
         if PermissionManager.shared.isAccessibilityEnabled {
             startApp()
         } else {
@@ -268,6 +303,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async {
                 self?.showStartupErrorAlert(message: message)
             }
+        }
+
+        // Support test simulation of hotkey registration failure
+        if TestMode.simulateHotkeyFailure {
+            AppStatus.shared.updateHintModeHotkeyStatus(.failed(reason: "Simulated failure for testing"))
+            AppStatus.shared.updateScrollModeHotkeyStatus(.failed(reason: "Simulated failure for testing"))
+            AppStatus.shared.updateSearchModeHotkeyStatus(.failed(reason: "Simulated failure for testing"))
+            updateMenu()
+            updateMenuBarIcon()
+            return
         }
 
         Coordinator.shared.setup()
