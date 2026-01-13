@@ -1,0 +1,17 @@
+[tools]
+swiftlint = "latest"
+
+[tasks.lint]
+run = "swiftlint lint --strict Sources/"
+
+[tasks.format-check]
+run = "swift-format lint --recursive Sources/"
+
+[tasks.build]
+run = "swift build --target KeyNav"
+
+[tasks.test]
+run = "swift test"
+
+[tasks.pre-commit]
+run = "./scripts/pre-commit.sh"
