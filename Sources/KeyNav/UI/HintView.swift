@@ -26,20 +26,42 @@ final class HintView: NSView {
         super.init(frame: frameRect)
         wantsLayer = true
         layer?.drawsAsynchronously = true
+        setupAccessibility()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         wantsLayer = true
         layer?.drawsAsynchronously = true
+        setupAccessibility()
     }
 
-    /// Background color: pale yellow RGB(255, 224, 112)
-    var hintBackgroundColor: NSColor = NSColor(calibratedRed: 255/255.0, green: 224/255.0, blue: 112/255.0, alpha: 1.0)
-    /// Unmatched (untyped) text color: black
-    var hintTextColor: NSColor = NSColor.black
-    /// Matched (typed) text color: golden brown RGB(212, 172, 58)
-    var hintMatchedTextColor: NSColor = NSColor(calibratedRed: 212/255.0, green: 172/255.0, blue: 58/255.0, alpha: 1.0)
+    private func setupAccessibility() {
+        setAccessibilityElement(true)
+        setAccessibilityRole(.group)
+        setAccessibilityRoleDescription("Keyboard navigation hints")
+    }
+
+    // MARK: - Accessibility
+
+    override func accessibilityLabel() -> String? {
+        guard !hints.isEmpty else { return "No hints available" }
+        return "\(hints.count) keyboard hints displayed"
+    }
+
+    override func accessibilityChildren() -> [Any]? {
+        // Expose each hint as an accessible element
+        return hints.enumerated().map { index, hint in
+            HintAccessibilityElement(hint: hint, index: index, parent: self)
+        }
+    }
+
+    /// Background color: appearance-aware (pale yellow in light mode, muted gold in dark mode)
+    var hintBackgroundColor: NSColor = AppearanceColors.hintBackground
+    /// Unmatched (untyped) text color: appearance-aware
+    var hintTextColor: NSColor = AppearanceColors.hintText
+    /// Matched (typed) text color: appearance-aware golden
+    var hintMatchedTextColor: NSColor = AppearanceColors.hintMatchedText
     /// Font size: 11pt bold (Vimac default)
     var hintFont: NSFont = NSFont.systemFont(ofSize: 11, weight: .bold)
     var hintCornerRadius: CGFloat = 3
@@ -94,7 +116,7 @@ final class HintView: NSView {
         NSShadow().set()
 
         // Draw border
-        NSColor.darkGray.setStroke()
+        AppearanceColors.hintBorder.setStroke()
         backgroundPath.lineWidth = hintBorderWidth
         backgroundPath.stroke()
 
@@ -134,5 +156,46 @@ final class HintView: NSView {
         attributedString.setAttributes(matchedAttributes, range: nsRange)
 
         return attributedString
+    }
+}
+
+// MARK: - Accessibility Element for Individual Hints
+
+/// Represents a single hint as an accessibility element for VoiceOver.
+private class HintAccessibilityElement: NSAccessibilityElement {
+    private let hint: HintViewModel
+    private let index: Int
+    private weak var parentView: HintView?
+
+    init(hint: HintViewModel, index: Int, parent: HintView) {
+        self.hint = hint
+        self.index = index
+        self.parentView = parent
+        super.init()
+
+        setAccessibilityRole(.button)
+        setAccessibilityRoleDescription("Hint key")
+        setAccessibilityParent(parent)
+    }
+
+    override func accessibilityLabel() -> String? {
+        "Press \(hint.label) to activate"
+    }
+
+    override func accessibilityFrame() -> NSRect {
+        guard let parent = parentView else { return .zero }
+        // Convert hint frame to screen coordinates
+        let windowFrame = parent.window?.frame ?? .zero
+        let viewFrame = parent.convert(hint.frame, to: nil)
+        return NSRect(
+            x: windowFrame.origin.x + viewFrame.origin.x,
+            y: windowFrame.origin.y + viewFrame.origin.y,
+            width: viewFrame.width,
+            height: viewFrame.height
+        )
+    }
+
+    override func accessibilityIndex() -> Int {
+        index
     }
 }

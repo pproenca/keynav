@@ -148,7 +148,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.title = "KeyNav Setup"
         window.center()
 
-        let view = NSView(frame: window.contentView!.bounds)
+        let view = NSView(frame: window.contentView?.bounds ?? NSRect(x: 0, y: 0, width: 450, height: 250))
 
         // Icon
         let iconView = NSImageView(frame: NSRect(x: 175, y: 170, width: 100, height: 60))

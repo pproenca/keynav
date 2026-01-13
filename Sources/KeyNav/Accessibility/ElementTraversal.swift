@@ -34,32 +34,20 @@ final class ElementTraversal {
     }
 
     func getFocusedWindow(from app: AXUIElement) -> AXUIElement? {
-        var windowRef: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &windowRef)
-        guard result == .success else { return nil }
-        return (windowRef as! AXUIElement)
+        AXHelpers.getElement(from: app, attribute: kAXFocusedWindowAttribute as CFString)
     }
 
     /// Get the focused UI element - this can be a menu when a menu is open
     func getFocusedUIElement(from app: AXUIElement) -> AXUIElement? {
-        var elementRef: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(app, kAXFocusedUIElementAttribute as CFString, &elementRef)
-        guard result == .success else { return nil }
-        return (elementRef as! AXUIElement)
+        AXHelpers.getElement(from: app, attribute: kAXFocusedUIElementAttribute as CFString)
     }
 
     func getMenuBar(from app: AXUIElement) -> AXUIElement? {
-        var menuBarRef: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(app, kAXMenuBarAttribute as CFString, &menuBarRef)
-        guard result == .success else { return nil }
-        return (menuBarRef as! AXUIElement)
+        AXHelpers.getElement(from: app, attribute: kAXMenuBarAttribute as CFString)
     }
 
     func getExtrasMenuBar(from app: AXUIElement) -> AXUIElement? {
-        var extrasRef: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(app, "AXExtrasMenuBar" as CFString, &extrasRef)
-        guard result == .success else { return nil }
-        return (extrasRef as! AXUIElement)
+        AXHelpers.getElement(from: app, attribute: "AXExtrasMenuBar" as CFString)
     }
 
     func getChildren(of element: AXUIElement) -> [AXUIElement] {
@@ -102,21 +90,7 @@ final class ElementTraversal {
     }
 
     func getFrame(of element: AXUIElement) -> CGRect? {
-        var positionRef: CFTypeRef?
-        var sizeRef: CFTypeRef?
-
-        guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &positionRef) == .success,
-              AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &sizeRef) == .success else {
-            return nil
-        }
-
-        var position = CGPoint.zero
-        var size = CGSize.zero
-
-        AXValueGetValue(positionRef as! AXValue, .cgPoint, &position)
-        AXValueGetValue(sizeRef as! AXValue, .cgSize, &size)
-
-        return CGRect(origin: position, size: size)
+        AXHelpers.getFrame(from: element)
     }
 
     func getActions(of element: AXUIElement) -> [String] {
@@ -192,9 +166,7 @@ final class ElementTraversal {
             }
             visited.insert(elementDesc)
 
-            var parentRef: CFTypeRef?
-            if AXUIElementCopyAttributeValue(current, kAXParentAttribute as CFString, &parentRef) == .success,
-               let parent = parentRef as! AXUIElement? {
+            if let parent = AXHelpers.getElement(from: current, attribute: kAXParentAttribute as CFString) {
                 let parentRole = getRole(of: parent)
 
                 // Stop if we've gone past menus (hit the menu bar or app)
@@ -297,11 +269,7 @@ final class ElementTraversal {
         var results: [ActionableElement] = []
 
         // Method 1: Check the focused UI element - open menus often appear as focused
-        var focusedElementRef: CFTypeRef?
-        if AXUIElementCopyAttributeValue(app, kAXFocusedUIElementAttribute as CFString, &focusedElementRef) == .success,
-           let focusedElement = focusedElementRef {
-            let axFocused = focusedElement as! AXUIElement
-
+        if let axFocused = AXHelpers.getElement(from: app, attribute: kAXFocusedUIElementAttribute as CFString) {
             // Check if the focused element is a menu or has menu children
             if let role = getRole(of: axFocused) {
                 if role == "AXMenu" || role == "AXMenuItem" {
@@ -309,9 +277,7 @@ final class ElementTraversal {
                 }
 
                 // Also check parent - menu items have the menu as parent
-                var parentRef: CFTypeRef?
-                if AXUIElementCopyAttributeValue(axFocused, kAXParentAttribute as CFString, &parentRef) == .success,
-                   let parent = parentRef as! AXUIElement? {
+                if let parent = AXHelpers.getElement(from: axFocused, attribute: kAXParentAttribute as CFString) {
                     if let parentRole = getRole(of: parent), parentRole == "AXMenu" {
                         results.append(contentsOf: traverseMenuElements(from: parent))
                     }

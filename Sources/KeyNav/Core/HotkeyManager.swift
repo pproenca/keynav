@@ -434,7 +434,7 @@ final class HotkeyManager {
     // MARK: - Persistence
 
     private func loadSavedConfigurations() {
-        guard let data = UserDefaults.standard.data(forKey: "hotkeyConfigurations") else { return }
+        guard let data = Configuration.shared.hotkeyConfigurationsData else { return }
 
         do {
             let configs = try JSONDecoder().decode([String: HotkeyConfiguration].self, from: data)
@@ -455,7 +455,7 @@ final class HotkeyManager {
 
         do {
             let data = try JSONEncoder().encode(configs)
-            UserDefaults.standard.set(data, forKey: "hotkeyConfigurations")
+            Configuration.shared.hotkeyConfigurationsData = data
         } catch {
             // Silently fail - not critical
         }

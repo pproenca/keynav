@@ -22,14 +22,20 @@ class PreferencesWindowController: NSWindowController {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        // This controller is always created programmatically, not from a storyboard
+        return nil
     }
 
     private func setupUI() {
         guard let contentView = window?.contentView else { return }
 
+        // Configure window accessibility
+        window?.setAccessibilityLabel("KeyNav Preferences")
+        window?.setAccessibilityRole(.window)
+
         tabView = NSTabView(frame: contentView.bounds)
         tabView.autoresizingMask = [.width, .height]
+        tabView.setAccessibilityLabel("Preferences sections")
 
         // Shortcuts Tab
         let shortcutsTab = NSTabViewItem(identifier: "shortcuts")
@@ -76,13 +82,17 @@ class PreferencesWindowController: NSWindowController {
 
         let hintShortcut = createShortcutField(
             current: HotkeyManager.shared.hintModeConfig.displayString,
-            status: HotkeyManager.shared.hintModeRegistered
+            status: HotkeyManager.shared.hintModeRegistered,
+            accessibilityLabel: "Hint Mode shortcut"
         )
         hintShortcut.frame = NSRect(x: 150, y: y, width: 150, height: 25)
         hintShortcut.tag = 1
         view.addSubview(hintShortcut)
 
-        let hintStatus = createStatusIndicator(HotkeyManager.shared.hintModeRegistered)
+        let hintStatus = createStatusIndicator(
+            HotkeyManager.shared.hintModeRegistered,
+            accessibilityLabel: HotkeyManager.shared.hintModeRegistered ? "Hint Mode registered" : "Hint Mode not registered"
+        )
         hintStatus.frame = NSRect(x: 310, y: y + 2, width: 20, height: 20)
         view.addSubview(hintStatus)
 
@@ -95,13 +105,17 @@ class PreferencesWindowController: NSWindowController {
 
         let scrollShortcut = createShortcutField(
             current: HotkeyManager.shared.scrollModeConfig.displayString,
-            status: HotkeyManager.shared.scrollModeRegistered
+            status: HotkeyManager.shared.scrollModeRegistered,
+            accessibilityLabel: "Scroll Mode shortcut"
         )
         scrollShortcut.frame = NSRect(x: 150, y: y, width: 150, height: 25)
         scrollShortcut.tag = 2
         view.addSubview(scrollShortcut)
 
-        let scrollStatus = createStatusIndicator(HotkeyManager.shared.scrollModeRegistered)
+        let scrollStatus = createStatusIndicator(
+            HotkeyManager.shared.scrollModeRegistered,
+            accessibilityLabel: HotkeyManager.shared.scrollModeRegistered ? "Scroll Mode registered" : "Scroll Mode not registered"
+        )
         scrollStatus.frame = NSRect(x: 310, y: y + 2, width: 20, height: 20)
         view.addSubview(scrollStatus)
 
@@ -114,13 +128,17 @@ class PreferencesWindowController: NSWindowController {
 
         let searchShortcut = createShortcutField(
             current: HotkeyManager.shared.searchModeConfig.displayString,
-            status: HotkeyManager.shared.searchModeRegistered
+            status: HotkeyManager.shared.searchModeRegistered,
+            accessibilityLabel: "Search Mode shortcut"
         )
         searchShortcut.frame = NSRect(x: 150, y: y, width: 150, height: 25)
         searchShortcut.tag = 3
         view.addSubview(searchShortcut)
 
-        let searchStatus = createStatusIndicator(HotkeyManager.shared.searchModeRegistered)
+        let searchStatus = createStatusIndicator(
+            HotkeyManager.shared.searchModeRegistered,
+            accessibilityLabel: HotkeyManager.shared.searchModeRegistered ? "Search Mode registered" : "Search Mode not registered"
+        )
         searchStatus.frame = NSRect(x: 310, y: y + 2, width: 20, height: 20)
         view.addSubview(searchStatus)
 
@@ -149,7 +167,7 @@ class PreferencesWindowController: NSWindowController {
         return view
     }
 
-    private func createShortcutField(current: String, status: Bool) -> NSTextField {
+    private func createShortcutField(current: String, status: Bool, accessibilityLabel: String) -> NSTextField {
         let field = ShortcutTextField(frame: .zero)
         field.stringValue = current
         field.isEditable = true
@@ -157,15 +175,19 @@ class PreferencesWindowController: NSWindowController {
         field.bezelStyle = .roundedBezel
         field.alignment = .center
         field.font = NSFont.systemFont(ofSize: 13)
+        field.setAccessibilityLabel(accessibilityLabel)
+        field.setAccessibilityRoleDescription("Press to record a new keyboard shortcut")
         return field
     }
 
-    private func createStatusIndicator(_ isOperational: Bool) -> NSImageView {
+    private func createStatusIndicator(_ isOperational: Bool, accessibilityLabel: String) -> NSImageView {
         let imageView = NSImageView()
         let imageName = isOperational ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+        let accessibilityDesc = isOperational ? "Status: registered" : "Status: not registered"
         let color: NSColor = isOperational ? .systemGreen : .systemOrange
-        imageView.image = NSImage(systemSymbolName: imageName, accessibilityDescription: nil)
+        imageView.image = NSImage(systemSymbolName: imageName, accessibilityDescription: accessibilityDesc)
         imageView.contentTintColor = color
+        imageView.setAccessibilityLabel(accessibilityLabel)
         return imageView
     }
 
@@ -199,27 +221,20 @@ class PreferencesWindowController: NSWindowController {
 
     // MARK: - Hints View
 
-    // UserDefaults keys for hint preferences
-    private static let hintCharactersKey = "hintCharacters"
-    private static let hintTextSizeKey = "hintTextSize"
-    private static let defaultHintCharacters = "sadfjklewcmpgh"
-    private static let defaultHintTextSize: CGFloat = 11.0
-
     private func getHintCharacters() -> String {
-        return UserDefaults.standard.string(forKey: Self.hintCharactersKey) ?? Self.defaultHintCharacters
+        Configuration.shared.hintCharacters
     }
 
     private func setHintCharacters(_ chars: String) {
-        UserDefaults.standard.set(chars, forKey: Self.hintCharactersKey)
+        Configuration.shared.hintCharacters = chars
     }
 
     private func getHintTextSize() -> CGFloat {
-        let size = UserDefaults.standard.double(forKey: Self.hintTextSizeKey)
-        return size > 0 ? CGFloat(size) : Self.defaultHintTextSize
+        Configuration.shared.hintTextSize
     }
 
     private func setHintTextSize(_ size: CGFloat) {
-        UserDefaults.standard.set(Double(size), forKey: Self.hintTextSizeKey)
+        Configuration.shared.hintTextSize = size
     }
 
     private func createHintsView() -> NSView {
@@ -243,6 +258,8 @@ class PreferencesWindowController: NSWindowController {
         charField.tag = 10
         charField.target = self
         charField.action = #selector(hintCharactersChanged(_:))
+        charField.setAccessibilityLabel("Hint characters")
+        charField.setAccessibilityRoleDescription("Characters used for keyboard hint labels")
         view.addSubview(charField)
 
         y -= 30
@@ -266,6 +283,8 @@ class PreferencesWindowController: NSWindowController {
         sizeSlider.doubleValue = Double(getHintTextSize())
         sizeSlider.target = self
         sizeSlider.action = #selector(hintSizeChanged(_:))
+        sizeSlider.setAccessibilityLabel("Hint text size")
+        sizeSlider.setAccessibilityValue("\(Int(getHintTextSize())) points")
         view.addSubview(sizeSlider)
 
         let sizeValueLabel = createLabel("\(Int(getHintTextSize())) pt")

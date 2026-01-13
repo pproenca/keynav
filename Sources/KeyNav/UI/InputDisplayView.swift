@@ -7,7 +7,7 @@ final class InputDisplayView: NSView {
     private let label: NSTextField = {
         let field = NSTextField(labelWithString: "")
         field.font = NSFont.monospacedSystemFont(ofSize: 24, weight: .medium)
-        field.textColor = .white
+        field.textColor = AppearanceColors.inputDisplayText
         field.alignment = .center
         field.translatesAutoresizingMaskIntoConstraints = false
         return field
@@ -16,7 +16,6 @@ final class InputDisplayView: NSView {
     private let containerView: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.8).cgColor
         view.layer?.cornerRadius = 10
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
@@ -26,6 +25,16 @@ final class InputDisplayView: NSView {
         didSet {
             label.stringValue = text
             containerView.isHidden = text.isEmpty
+            updateAccessibility()
+        }
+    }
+
+    private func updateAccessibility() {
+        if text.isEmpty {
+            setAccessibilityLabel("No input")
+        } else {
+            setAccessibilityLabel("Typed: \(text)")
+            setAccessibilityValue(text)
         }
     }
 
@@ -42,6 +51,15 @@ final class InputDisplayView: NSView {
     private func setup() {
         addSubview(containerView)
         containerView.addSubview(label)
+
+        // Set background color using layer - this supports dynamic colors
+        containerView.layer?.backgroundColor = AppearanceColors.inputDisplayBackground.cgColor
+
+        // Configure accessibility
+        setAccessibilityElement(true)
+        setAccessibilityRole(.staticText)
+        setAccessibilityRoleDescription("Typed hint characters")
+        setAccessibilityLabel("No input")
 
         NSLayoutConstraint.activate([
             containerView.centerXAnchor.constraint(equalTo: centerXAnchor),

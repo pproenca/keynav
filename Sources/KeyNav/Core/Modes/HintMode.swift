@@ -94,20 +94,23 @@ final class HintMode: Mode, KeyboardEventCaptureDelegate {
     }
 
     private func setupOverlay() {
-        overlayWindow = OverlayWindow()
+        let overlay = OverlayWindow()
+        overlayWindow = overlay
 
-        let contentView = NSView(frame: overlayWindow!.frame)
+        let contentView = NSView(frame: overlay.frame)
 
-        hintView = HintView(frame: contentView.bounds)
-        hintView?.autoresizingMask = [.width, .height]
-        contentView.addSubview(hintView!)
+        let hints = HintView(frame: contentView.bounds)
+        hints.autoresizingMask = [.width, .height]
+        contentView.addSubview(hints)
+        hintView = hints
 
-        inputDisplayView = InputDisplayView(frame: contentView.bounds)
-        inputDisplayView?.autoresizingMask = [.width, .height]
-        contentView.addSubview(inputDisplayView!)
+        let inputDisplay = InputDisplayView(frame: contentView.bounds)
+        inputDisplay.autoresizingMask = [.width, .height]
+        contentView.addSubview(inputDisplay)
+        inputDisplayView = inputDisplay
 
-        overlayWindow?.contentView = contentView
-        overlayWindow?.show()
+        overlay.contentView = contentView
+        overlay.show()
     }
 
     private func loadElements() {

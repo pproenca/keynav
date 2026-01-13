@@ -57,17 +57,19 @@ final class SearchMode: Mode {
     }
 
     private func setupOverlay() {
-        overlayWindow = OverlayWindow()
+        let overlay = OverlayWindow()
+        overlayWindow = overlay
 
-        let contentView = NSView(frame: overlayWindow!.frame)
+        let contentView = NSView(frame: overlay.frame)
 
-        searchView = SearchResultsView(frame: contentView.bounds)
-        searchView?.delegate = self
-        contentView.addSubview(searchView!)
+        let search = SearchResultsView(frame: contentView.bounds)
+        search.delegate = self
+        contentView.addSubview(search)
+        searchView = search
 
-        overlayWindow?.contentView = contentView
-        overlayWindow?.show()
-        searchView?.focus()
+        overlay.contentView = contentView
+        overlay.show()
+        search.focus()
     }
 
     private func loadAllElements() {
@@ -157,7 +159,7 @@ final class SearchResultsView: NSView {
     private let containerView: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        view.layer?.backgroundColor = AppearanceColors.searchBarBackground.cgColor
         view.layer?.cornerRadius = 12
         view.layer?.shadowColor = NSColor.black.cgColor
         view.layer?.shadowOpacity = 0.4

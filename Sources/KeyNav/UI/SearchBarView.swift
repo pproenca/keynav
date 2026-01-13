@@ -37,7 +37,7 @@ final class SearchBarView: NSView {
     private let containerView: NSView = {
         let view = NSView()
         view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        view.layer?.backgroundColor = AppearanceColors.searchBarBackground.cgColor
         view.layer?.cornerRadius = 10
         view.layer?.shadowColor = NSColor.black.cgColor
         view.layer?.shadowOpacity = 0.3
@@ -65,6 +65,14 @@ final class SearchBarView: NSView {
     private func setup() {
         addSubview(containerView)
         containerView.addSubview(textField)
+
+        // Configure accessibility
+        setAccessibilityElement(true)
+        setAccessibilityRole(.group)
+        setAccessibilityLabel("Search UI elements")
+
+        textField.setAccessibilityLabel("Search field")
+        textField.setAccessibilityRoleDescription("Search for UI elements to navigate")
 
         NSLayoutConstraint.activate([
             containerView.centerXAnchor.constraint(equalTo: centerXAnchor),

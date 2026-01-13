@@ -1,5 +1,6 @@
 // Sources/KeyNav/Core/Modes/ScrollMode.swift
 import AppKit
+import ApplicationServices
 
 protocol ScrollModeDelegate: AnyObject {
     func scrollModeDidDeactivate()
@@ -99,28 +100,15 @@ final class ScrollMode: Mode {
 
     private func findScrollableArea() {
         // For now, use the focused window bounds
-        if let app = NSWorkspace.shared.frontmostApplication {
-            let axApp = AXUIElementCreateApplication(app.processIdentifier)
-            var windowRef: CFTypeRef?
+        guard let app = NSWorkspace.shared.frontmostApplication else { return }
 
-            if AXUIElementCopyAttributeValue(axApp, kAXFocusedWindowAttribute as CFString, &windowRef) == .success {
-                let window = windowRef as! AXUIElement
-                var positionRef: CFTypeRef?
-                var sizeRef: CFTypeRef?
+        let axApp = AXUIElementCreateApplication(app.processIdentifier)
 
-                if AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &positionRef) == .success,
-                   AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeRef) == .success {
+        guard let window = AXHelpers.getElement(from: axApp, attribute: kAXFocusedWindowAttribute as CFString),
+              let frame = AXHelpers.getFrame(from: window) else { return }
 
-                    var position = CGPoint.zero
-                    var size = CGSize.zero
-                    AXValueGetValue(positionRef as! AXValue, .cgPoint, &position)
-                    AXValueGetValue(sizeRef as! AXValue, .cgSize, &size)
-
-                    currentScrollArea = CGRect(origin: position, size: size)
-                    showScrollIndicator()
-                }
-            }
-        }
+        currentScrollArea = frame
+        showScrollIndicator()
     }
 
     private func showScrollIndicator() {
