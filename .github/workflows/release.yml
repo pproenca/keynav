@@ -1,0 +1,209 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  APP_NAME: KeyNav
+  BUNDLE_ID: com.keynav.app
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Import Developer ID Certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo "$CERTIFICATE_P12" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          # Set keychain for code signing
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Build App
+        run: |
+          swift build -c release
+
+      - name: Create App Bundle
+        run: |
+          APP_BUNDLE="$GITHUB_WORKSPACE/$APP_NAME.app"
+          BUILD_DIR="$GITHUB_WORKSPACE/.build/release"
+
+          rm -rf "$APP_BUNDLE"
+          mkdir -p "$APP_BUNDLE/Contents/MacOS"
+          mkdir -p "$APP_BUNDLE/Contents/Frameworks"
+          mkdir -p "$APP_BUNDLE/Contents/Resources"
+
+          cp "$BUILD_DIR/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/"
+          cp "Sources/KeyNav/Resources/Info.plist" "$APP_BUNDLE/Contents/"
+          cp -R "$BUILD_DIR/Sparkle.framework" "$APP_BUNDLE/Contents/Frameworks/"
+
+          install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+
+      - name: Sign App Bundle
+        env:
+          SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+        run: |
+          APP_BUNDLE="$GITHUB_WORKSPACE/$APP_NAME.app"
+
+          codesign --force --options runtime --timestamp \
+              --sign "$SIGNING_IDENTITY" \
+              "$APP_BUNDLE/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
+          codesign --force --options runtime --timestamp \
+              --sign "$SIGNING_IDENTITY" \
+              "$APP_BUNDLE/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
+          codesign --force --options runtime --timestamp \
+              --sign "$SIGNING_IDENTITY" \
+              "$APP_BUNDLE/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate"
+          codesign --force --options runtime --timestamp \
+              --sign "$SIGNING_IDENTITY" \
+              "$APP_BUNDLE/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app"
+          codesign --force --options runtime --timestamp \
+              --sign "$SIGNING_IDENTITY" \
+              "$APP_BUNDLE/Contents/Frameworks/Sparkle.framework"
+          codesign --force --options runtime --timestamp \
+              --sign "$SIGNING_IDENTITY" \
+              "$APP_BUNDLE"
+
+          codesign --verify --deep --strict "$APP_BUNDLE"
+
+      - name: Notarize App
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          APP_BUNDLE="$GITHUB_WORKSPACE/$APP_NAME.app"
+
+          # Create zip for notarization
+          ditto -c -k --keepParent "$APP_BUNDLE" "$APP_NAME.zip"
+
+          # Submit for notarization
+          xcrun notarytool submit "$APP_NAME.zip" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_ID_PASSWORD" \
+              --team-id "$TEAM_ID" \
+              --wait
+
+          # Staple the ticket
+          xcrun stapler staple "$APP_BUNDLE"
+
+          rm "$APP_NAME.zip"
+
+      - name: Create DMG
+        env:
+          SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          APP_BUNDLE="$GITHUB_WORKSPACE/$APP_NAME.app"
+          DMG_PATH="$GITHUB_WORKSPACE/$APP_NAME.dmg"
+
+          mkdir -p dmg_contents
+          cp -R "$APP_BUNDLE" dmg_contents/
+          ln -s /Applications dmg_contents/Applications
+
+          hdiutil create -volname "$APP_NAME" \
+              -srcfolder dmg_contents \
+              -ov -format UDZO \
+              "$DMG_PATH"
+
+          rm -rf dmg_contents
+
+          # Sign DMG
+          codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$DMG_PATH"
+
+          # Notarize DMG
+          xcrun notarytool submit "$DMG_PATH" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_ID_PASSWORD" \
+              --team-id "$TEAM_ID" \
+              --wait
+
+          xcrun stapler staple "$DMG_PATH"
+
+      - name: Update Appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          DMG_PATH="$GITHUB_WORKSPACE/$APP_NAME.dmg"
+          APPCAST_PATH="$GITHUB_WORKSPACE/docs/appcast.xml"
+
+          # Get build number from Info.plist
+          BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "Sources/KeyNav/Resources/Info.plist")
+
+          # Get DMG size
+          DMG_SIZE=$(stat -f%z "$DMG_PATH")
+
+          # Create temporary file with private key
+          echo "$SPARKLE_PRIVATE_KEY" > $RUNNER_TEMP/sparkle_private_key
+
+          # Sign the DMG
+          SIGNATURE=$(.build/artifacts/sparkle/Sparkle/bin/sign_update "$DMG_PATH" -f $RUNNER_TEMP/sparkle_private_key 2>&1 | grep -E '^sparkle:edSignature=' | cut -d'"' -f2)
+
+          rm $RUNNER_TEMP/sparkle_private_key
+
+          # Download URL
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/$APP_NAME.dmg"
+
+          # Current date
+          PUB_DATE=$(date -R)
+
+          # Create new item
+          NEW_ITEM="    <item>
+      <title>Version $VERSION</title>
+      <pubDate>$PUB_DATE</pubDate>
+      <sparkle:version>$BUILD</sparkle:version>
+      <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
+      <enclosure url=\"$DOWNLOAD_URL\"
+                 sparkle:edSignature=\"$SIGNATURE\"
+                 length=\"$DMG_SIZE\"
+                 type=\"application/octet-stream\"/>
+    </item>"
+
+          # Insert into appcast
+          sed -i '' "s|<!-- Add new releases here, newest first -->|<!-- Add new releases here, newest first -->\n$NEW_ITEM|" "$APPCAST_PATH"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.APP_NAME }}.dmg
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit Appcast Update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/appcast.xml
+          git commit -m "Update appcast for ${GITHUB_REF#refs/tags/}"
+          git push origin HEAD:master

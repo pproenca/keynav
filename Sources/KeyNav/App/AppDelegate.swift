@@ -1,16 +1,27 @@
 // Sources/KeyNav/App/AppDelegate.swift
 import AppKit
 import Combine
+import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var onboardingWindow: NSWindow?
     private var preferencesWindowController: PreferencesWindowController?
     private var cancellables = Set<AnyCancellable>()
+    private let updaterController: SPUStandardUpdaterController
 
     // Menu bar icon names
     private let normalIcon = "keyboard"
     private let errorIcon = "keyboard.badge.exclamationmark"
+
+    override init() {
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+        super.init()
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBarItem()
@@ -45,6 +56,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Preferences
         menu.addItem(NSMenuItem(title: "Preferences...", action: #selector(openPreferences), keyEquivalent: ","))
+
+        // Check for Updates
+        let updateItem = NSMenuItem(title: "Check for Updates...", action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "")
+        updateItem.target = updaterController
+        menu.addItem(updateItem)
 
         // Troubleshoot (shown when there are issues)
         if AppStatus.shared.hasAnyFailure {

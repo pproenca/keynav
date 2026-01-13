@@ -18,5 +18,10 @@
     <true/>
     <key>NSAccessibilityUsageDescription</key>
     <string>KeyNav needs accessibility access to detect and click UI elements across all applications.</string>
+    <!-- Sparkle Auto-Update Configuration -->
+    <key>SUFeedURL</key>
+    <string>https://pproenca.github.io/isitokay-app/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>rQEVQKX+gby0BcpPboDCQvCRQHDwNcGYIRJ77xG4j1Y=</string>
 </dict>
 </plist>
