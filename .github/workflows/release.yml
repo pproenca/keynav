@@ -36,8 +36,8 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
           # Import certificate
-          echo "$CERTIFICATE_P12" | base64 --decode > $RUNNER_TEMP/certificate.p12
-          security import $RUNNER_TEMP/certificate.p12 \
+          echo "$CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" \
             -P "$CERTIFICATE_PASSWORD" \
             -A -t cert -f pkcs12 \
             -k "$KEYCHAIN_PATH"
@@ -164,12 +164,12 @@ jobs:
           DMG_SIZE=$(stat -f%z "$DMG_PATH")
 
           # Create temporary file with private key
-          echo "$SPARKLE_PRIVATE_KEY" > $RUNNER_TEMP/sparkle_private_key
+          echo "$SPARKLE_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle_private_key"
 
           # Sign the DMG
-          SIGNATURE=$(.build/artifacts/sparkle/Sparkle/bin/sign_update "$DMG_PATH" -f $RUNNER_TEMP/sparkle_private_key 2>&1 | grep -E '^sparkle:edSignature=' | cut -d'"' -f2)
+          SIGNATURE=$(.build/artifacts/sparkle/Sparkle/bin/sign_update "$DMG_PATH" -f "$RUNNER_TEMP/sparkle_private_key" 2>&1 | grep -E '^sparkle:edSignature=' | cut -d'"' -f2)
 
-          rm $RUNNER_TEMP/sparkle_private_key
+          rm "$RUNNER_TEMP/sparkle_private_key"
 
           # Download URL
           DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/$APP_NAME.dmg"
@@ -177,23 +177,33 @@ jobs:
           # Current date
           PUB_DATE=$(date -R)
 
-          # Create new item
-          NEW_ITEM="    <item>
-      <title>Version $VERSION</title>
-      <pubDate>$PUB_DATE</pubDate>
-      <sparkle:version>$BUILD</sparkle:version>
-      <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
-      <enclosure url=\"$DOWNLOAD_URL\"
-                 sparkle:edSignature=\"$SIGNATURE\"
-                 length=\"$DMG_SIZE\"
-                 type=\"application/octet-stream\"/>
-    </item>"
+          # Create new item using heredoc to avoid YAML parsing issues
+          NEW_ITEM=$(cat <<XMLEOF
+            <item>
+              <title>Version $VERSION</title>
+              <pubDate>$PUB_DATE</pubDate>
+              <sparkle:version>$BUILD</sparkle:version>
+              <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
+              <enclosure url="$DOWNLOAD_URL"
+                         sparkle:edSignature="$SIGNATURE"
+                         length="$DMG_SIZE"
+                         type="application/octet-stream"/>
+            </item>
+          XMLEOF
+          )
 
-          # Insert into appcast
-          sed -i '' "s|<!-- Add new releases here, newest first -->|<!-- Add new releases here, newest first -->\n$NEW_ITEM|" "$APPCAST_PATH"
+          # Insert into appcast using awk to avoid sed issues with multiline
+          awk -v new_item="$NEW_ITEM" '
+            /<!-- Add new releases here, newest first -->/ {
+              print
+              print new_item
+              next
+            }
+            { print }
+          ' "$APPCAST_PATH" > "$APPCAST_PATH.tmp" && mv "$APPCAST_PATH.tmp" "$APPCAST_PATH"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.APP_NAME }}.dmg
           generate_release_notes: true
