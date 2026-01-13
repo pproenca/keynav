@@ -43,7 +43,7 @@ final class ShortcutsPreferencesView: NSView {
         NSLayoutConstraint.activate([
             mainStack.topAnchor.constraint(equalTo: topAnchor, constant: 20),
             mainStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20)
+            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
         ])
 
         // Title
@@ -52,36 +52,42 @@ final class ShortcutsPreferencesView: NSView {
         mainStack.setCustomSpacing(20, after: titleLabel)
 
         // Hint Mode row
-        mainStack.addArrangedSubview(createHotkeyRow(
-            label: "Hint Mode:",
-            shortcut: HotkeyManager.shared.hintModeConfig.displayString,
-            isRegistered: HotkeyManager.shared.hintModeRegistered,
-            tag: 1,
-            accessibilityLabel: "Hint Mode shortcut"
-        ))
+        mainStack.addArrangedSubview(
+            createHotkeyRow(
+                label: "Hint Mode:",
+                shortcut: HotkeyManager.shared.hintModeConfig.displayString,
+                isRegistered: HotkeyManager.shared.hintModeRegistered,
+                tag: 1,
+                accessibilityLabel: "Hint Mode shortcut"
+            ))
 
         // Scroll Mode row
-        mainStack.addArrangedSubview(createHotkeyRow(
-            label: "Scroll Mode:",
-            shortcut: HotkeyManager.shared.scrollModeConfig.displayString,
-            isRegistered: HotkeyManager.shared.scrollModeRegistered,
-            tag: 2,
-            accessibilityLabel: "Scroll Mode shortcut"
-        ))
+        mainStack.addArrangedSubview(
+            createHotkeyRow(
+                label: "Scroll Mode:",
+                shortcut: HotkeyManager.shared.scrollModeConfig.displayString,
+                isRegistered: HotkeyManager.shared.scrollModeRegistered,
+                tag: 2,
+                accessibilityLabel: "Scroll Mode shortcut"
+            ))
 
         // Search Mode row
-        mainStack.addArrangedSubview(createHotkeyRow(
-            label: "Search Mode:",
-            shortcut: HotkeyManager.shared.searchModeConfig.displayString,
-            isRegistered: HotkeyManager.shared.searchModeRegistered,
-            tag: 3,
-            accessibilityLabel: "Search Mode shortcut"
-        ))
+        mainStack.addArrangedSubview(
+            createHotkeyRow(
+                label: "Search Mode:",
+                shortcut: HotkeyManager.shared.searchModeConfig.displayString,
+                isRegistered: HotkeyManager.shared.searchModeRegistered,
+                tag: 3,
+                accessibilityLabel: "Search Mode shortcut"
+            ))
 
-        mainStack.setCustomSpacing(20, after: mainStack.arrangedSubviews.last!)
+        if let lastView = mainStack.arrangedSubviews.last {
+            mainStack.setCustomSpacing(20, after: lastView)
+        }
 
         // Instructions
-        let instructionsLabel = NSTextField(wrappingLabelWithString: "Click a shortcut field and press your desired key combination to change it.")
+        let instructionText = "Click a shortcut field and press your desired key combination to change it."
+        let instructionsLabel = NSTextField(wrappingLabelWithString: instructionText)
         instructionsLabel.textColor = .secondaryLabelColor
         mainStack.addArrangedSubview(instructionsLabel)
         mainStack.setCustomSpacing(20, after: instructionsLabel)
@@ -192,7 +198,7 @@ final class HintsPreferencesView: NSView {
         NSLayoutConstraint.activate([
             mainStack.topAnchor.constraint(equalTo: topAnchor, constant: 20),
             mainStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20)
+            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
         ])
 
         // Title
@@ -329,7 +335,7 @@ final class DiagnosticPreferencesView: NSView {
         NSLayoutConstraint.activate([
             mainStack.topAnchor.constraint(equalTo: topAnchor, constant: 20),
             mainStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20)
+            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
         ])
 
         // Title
@@ -338,33 +344,40 @@ final class DiagnosticPreferencesView: NSView {
         mainStack.setCustomSpacing(16, after: titleLabel)
 
         // Status rows
-        mainStack.addArrangedSubview(createStatusRow(
-            label: "Accessibility Permission:",
-            status: AppStatus.shared.permissionStatus,
-            showRequestButton: !PermissionManager.shared.isAccessibilityEnabled
-        ))
+        mainStack.addArrangedSubview(
+            createStatusRow(
+                label: "Accessibility Permission:",
+                status: AppStatus.shared.permissionStatus,
+                showRequestButton: !PermissionManager.shared.isAccessibilityEnabled
+            ))
 
-        mainStack.addArrangedSubview(createStatusRow(
-            label: "Hint Mode Shortcut:",
-            status: AppStatus.shared.hintModeHotkeyStatus
-        ))
+        mainStack.addArrangedSubview(
+            createStatusRow(
+                label: "Hint Mode Shortcut:",
+                status: AppStatus.shared.hintModeHotkeyStatus
+            ))
 
-        mainStack.addArrangedSubview(createStatusRow(
-            label: "Scroll Mode Shortcut:",
-            status: AppStatus.shared.scrollModeHotkeyStatus
-        ))
+        mainStack.addArrangedSubview(
+            createStatusRow(
+                label: "Scroll Mode Shortcut:",
+                status: AppStatus.shared.scrollModeHotkeyStatus
+            ))
 
-        mainStack.addArrangedSubview(createStatusRow(
-            label: "Search Mode Shortcut:",
-            status: AppStatus.shared.searchModeHotkeyStatus
-        ))
+        mainStack.addArrangedSubview(
+            createStatusRow(
+                label: "Search Mode Shortcut:",
+                status: AppStatus.shared.searchModeHotkeyStatus
+            ))
 
-        mainStack.addArrangedSubview(createStatusRow(
-            label: "Keyboard Capture:",
-            status: AppStatus.shared.eventTapStatus
-        ))
+        mainStack.addArrangedSubview(
+            createStatusRow(
+                label: "Keyboard Capture:",
+                status: AppStatus.shared.eventTapStatus
+            ))
 
-        mainStack.setCustomSpacing(24, after: mainStack.arrangedSubviews.last!)
+        if let lastView = mainStack.arrangedSubviews.last {
+            mainStack.setCustomSpacing(24, after: lastView)
+        }
 
         // Buttons
         let buttonsStack = NSStackView()

@@ -68,7 +68,12 @@ final class HintMode: Mode, KeyboardEventCaptureDelegate {
 
     // MARK: - KeyboardEventCaptureDelegate
 
-    func keyboardEventCapture(_ capture: KeyboardEventCapture, didReceiveKeyDown keyCode: UInt16, characters: String?, modifiers: KeyModifiers) -> Bool {
+    func keyboardEventCapture(
+        _ capture: KeyboardEventCapture,
+        didReceiveKeyDown keyCode: UInt16,
+        characters: String?,
+        modifiers: KeyModifiers
+    ) -> Bool {
         guard isActive else { return false }
 
         let result = logic.handleKeyCode(keyCode, characters: characters, modifiers: modifiers)
@@ -126,7 +131,13 @@ final class HintMode: Mode, KeyboardEventCaptureDelegate {
         let hints = zip(logic.filteredElements, logic.hintLabels).map { element, label -> HintViewModel in
             // Highlight matched portion of hint
             let typedCount = logic.typedHintChars.count
-            let matchedRange: Range<String.Index>? = typedCount > 0 ? label.startIndex..<label.index(label.startIndex, offsetBy: min(typedCount, label.count)) : nil
+            let matchedRange: Range<String.Index>?
+            if typedCount > 0 {
+                let endOffset = min(typedCount, label.count)
+                matchedRange = label.startIndex..<label.index(label.startIndex, offsetBy: endOffset)
+            } else {
+                matchedRange = nil
+            }
             return HintViewModel(
                 label: label,
                 frame: element.frame,

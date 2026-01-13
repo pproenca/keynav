@@ -36,7 +36,9 @@ final class ScrollKeyConfigTests: XCTestCase {
             left: "a",
             down: "s",
             up: "w",
-            right: "d"
+            right: "d",
+            halfPageDown: "f",
+            halfPageUp: "e"
         )
         let logic = ScrollModeLogic(keyConfig: config)
 

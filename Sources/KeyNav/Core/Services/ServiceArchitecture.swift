@@ -63,7 +63,7 @@ protocol QueryMenuBarExtrasServiceProtocol {
 }
 
 /// Protocol for querying notification center items
-protocol QueryNotificationCenterItemsServiceProtocol {
+protocol NotificationCenterQueryService {
     func queryNotificationCenterItems() -> [NotificationCenterItem]
 }
 
@@ -79,7 +79,7 @@ struct ServiceRegistry {
     private(set) var windowService: QueryWindowServiceProtocol?
     private(set) var menuBarItemsService: QueryMenuBarItemsServiceProtocol?
     private(set) var menuBarExtrasService: QueryMenuBarExtrasServiceProtocol?
-    private(set) var notificationCenterService: QueryNotificationCenterItemsServiceProtocol?
+    private(set) var notificationCenterService: NotificationCenterQueryService?
     private(set) var traversalServiceFinder: TraverseElementServiceFinderProtocol?
 
     mutating func register(windowService: QueryWindowServiceProtocol) {
@@ -94,7 +94,7 @@ struct ServiceRegistry {
         self.menuBarExtrasService = menuBarExtrasService
     }
 
-    mutating func register(notificationCenterService: QueryNotificationCenterItemsServiceProtocol) {
+    mutating func register(notificationCenterService: NotificationCenterQueryService) {
         self.notificationCenterService = notificationCenterService
     }
 

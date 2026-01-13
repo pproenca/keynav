@@ -24,7 +24,7 @@ struct InputSourceSwitcher {
         if (flags & 131072) != 0 { modifiers.insert(.shift) }
         if (flags & 262144) != 0 { modifiers.insert(.control) }
         if (flags & 524288) != 0 { modifiers.insert(.option) }
-        if (flags & 1048576) != 0 { modifiers.insert(.command) }
+        if (flags & 1_048_576) != 0 { modifiers.insert(.command) }
 
         return modifiers
     }

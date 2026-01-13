@@ -3,9 +3,9 @@ import Foundation
 
 /// Known browser rendering engines
 enum BrowserType: Equatable {
-    case webkit    // Safari, Safari Technology Preview
+    case webkit  // Safari, Safari Technology Preview
     case chromium  // Chrome, Edge, Brave, Opera, etc.
-    case firefox   // Firefox (Gecko)
+    case firefox  // Firefox (Gecko)
     case unknown
 }
 
@@ -13,7 +13,7 @@ enum BrowserType: Equatable {
 struct BrowserTypeDetector {
     private static let webkitBundles: Set<String> = [
         "com.apple.Safari",
-        "com.apple.SafariTechnologyPreview"
+        "com.apple.SafariTechnologyPreview",
     ]
 
     private static let chromiumBundles: Set<String> = [
@@ -24,13 +24,13 @@ struct BrowserTypeDetector {
         "com.brave.Browser",
         "com.operasoftware.Opera",
         "com.vivaldi.Vivaldi",
-        "org.chromium.Chromium"
+        "org.chromium.Chromium",
     ]
 
     private static let firefoxBundles: Set<String> = [
         "org.mozilla.firefox",
         "org.mozilla.firefoxdeveloperedition",
-        "org.mozilla.nightly"
+        "org.mozilla.nightly",
     ]
 
     func detect(bundleIdentifier: String) -> BrowserType {
@@ -57,7 +57,7 @@ struct WebAreaSearchStrategy {
         "AXControlSearchKey",
         "AXCheckBoxSearchKey",
         "AXRadioGroupSearchKey",
-        "AXGraphicSearchKey"
+        "AXGraphicSearchKey",
     ]
 
     /// Returns appropriate search keys based on browser type

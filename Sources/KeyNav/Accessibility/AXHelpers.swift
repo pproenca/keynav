@@ -57,7 +57,8 @@ enum AXHelpers {
     /// Retrieves the frame (position + size) of an element.
     static func getFrame(from element: AXUIElement) -> CGRect? {
         guard let position = getPosition(from: element),
-              let size = getSize(from: element) else {
+            let size = getSize(from: element)
+        else {
             return nil
         }
         return CGRect(origin: position, size: size)

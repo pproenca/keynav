@@ -7,11 +7,11 @@ final class InputState {
 
     /// Possible states of the input state machine
     enum State: Equatable {
-        case initialized     // No sequences registered yet
-        case wordsAdded      // Sequences registered, ready to receive input
-        case advancable      // Valid prefix entered, can continue or match
-        case match           // Complete match found
-        case deadend         // Invalid input, no possible match
+        case initialized  // No sequences registered yet
+        case wordsAdded  // Sequences registered, ready to receive input
+        case advancable  // Valid prefix entered, can continue or match
+        case match  // Complete match found
+        case deadend  // Invalid input, no possible match
     }
 
     private(set) var state: State = .initialized
@@ -32,7 +32,7 @@ final class InputState {
 
         // Check if this sequence is a prefix of any existing sequence
         // (would be ambiguous when to match)
-        if trie.getWordsWithPrefix(sequence).count > 0 {
+        if !trie.getWordsWithPrefix(sequence).isEmpty {
             return false
         }
 

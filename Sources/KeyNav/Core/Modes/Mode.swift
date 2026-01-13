@@ -86,7 +86,8 @@ struct ModeManager {
     mutating func switchTo(mode: ModeType) {
         // Deactivate current mode
         if let currentMode = currentMode,
-           let currentController = controllers[currentMode] {
+            let currentController = controllers[currentMode]
+        {
             currentController.deactivate()
         }
 

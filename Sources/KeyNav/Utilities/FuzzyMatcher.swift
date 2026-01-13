@@ -38,7 +38,8 @@ struct FuzzyMatcher {
     func filterAndSort(elements: [ActionableElement], query: String) -> [ActionableElement] {
         guard !query.isEmpty else { return elements }
 
-        return elements
+        return
+            elements
             .map { ($0, score(query: query, in: $0.label)) }
             .filter { $0.1 > 0 }
             .sorted { $0.1 > $1.1 }

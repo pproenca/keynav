@@ -42,18 +42,12 @@ final class PermissionManager {
 
     // MARK: - Open System Preferences
 
+    private static let accessibilityPreferencesURLString =
+        "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+
     /// Opens the Accessibility section of System Settings/Preferences
     func openAccessibilityPreferences() {
-        // Use different URL schemes for different macOS versions
-        let url: URL
-        if #available(macOS 13.0, *) {
-            // macOS Ventura and later use System Settings
-            url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-        } else {
-            // Older versions use System Preferences
-            url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-        }
-
+        guard let url = URL(string: Self.accessibilityPreferencesURLString) else { return }
         NSWorkspace.shared.open(url)
     }
 
@@ -105,7 +99,8 @@ final class PermissionManager {
                     self.pollTimer = nil
 
                     // Update AppStatus
-                    AppStatus.shared.updatePermissionStatus(.failed(reason: "Permission not granted within \(Int(timeout)) seconds"))
+                    let reason = "Permission not granted within \(Int(timeout)) seconds"
+                    AppStatus.shared.updatePermissionStatus(.failed(reason: reason))
 
                     onTimeout?()
                     return

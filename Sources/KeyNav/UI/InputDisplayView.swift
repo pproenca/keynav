@@ -69,7 +69,7 @@ final class InputDisplayView: NSView {
 
             label.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             label.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            label.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
+            label.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
         ])
 
         containerView.isHidden = true

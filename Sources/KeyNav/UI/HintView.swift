@@ -135,7 +135,7 @@ final class HintView: NSView {
         // Default attributes for unmatched text
         let unmatchedAttributes: [NSAttributedString.Key: Any] = [
             .font: hintFont,
-            .foregroundColor: hintTextColor
+            .foregroundColor: hintTextColor,
         ]
 
         // If no matched range, return all text in default color
@@ -146,7 +146,7 @@ final class HintView: NSView {
         // Matched attributes (golden brown)
         let matchedAttributes: [NSAttributedString.Key: Any] = [
             .font: hintFont,
-            .foregroundColor: hintMatchedTextColor
+            .foregroundColor: hintMatchedTextColor,
         ]
 
         let attributedString = NSMutableAttributedString(string: label, attributes: unmatchedAttributes)

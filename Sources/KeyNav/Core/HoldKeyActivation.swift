@@ -24,8 +24,8 @@ enum HoldKeyState: Equatable {
 /// Action to take after key release
 enum HoldKeyAction: Equatable {
     case replayKeypress  // Released before threshold - replay the original keypress
-    case activate        // Held long enough - activate the mode
-    case abort           // Something went wrong (e.g., modifier changed)
+    case activate  // Held long enough - activate the mode
+    case abort  // Something went wrong (e.g., modifier changed)
 }
 
 /// State machine for hold-to-activate behavior

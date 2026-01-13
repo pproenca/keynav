@@ -19,7 +19,8 @@ final class Trie {
             if current.children[char] == nil {
                 current.children[char] = TrieNode()
             }
-            current = current.children[char]!
+            guard let nextNode = current.children[char] else { continue }
+            current = nextNode
         }
         current.isEndOfWord = true
     }

@@ -82,7 +82,7 @@ final class SearchBarView: NSView {
 
             textField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             textField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            textField.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
+            textField.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
         ])
 
         textField.delegate = self

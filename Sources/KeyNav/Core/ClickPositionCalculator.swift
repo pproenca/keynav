@@ -12,7 +12,7 @@ enum ClickPositionCalculator {
     /// Roles that should be clicked at bottom-left instead of center
     private static let bottomLeftClickRoles: Set<String> = [
         "AXLink",
-        "AXStaticText"
+        "AXStaticText",
     ]
 
     /// Calculates the optimal click position for an element

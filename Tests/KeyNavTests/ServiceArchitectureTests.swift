@@ -82,7 +82,7 @@ final class ServiceArchitectureTests: XCTestCase {
     func testQueryNotificationCenterServiceProtocol() {
         let service = MockQueryNotificationCenterItemsService()
 
-        XCTAssertTrue(service is QueryNotificationCenterItemsServiceProtocol)
+        XCTAssertTrue(service is NotificationCenterQueryService)
     }
 
     func testQueryNotificationCenterReturnsItems() {
@@ -175,7 +175,7 @@ class MockQueryMenuBarExtrasService: QueryMenuBarExtrasServiceProtocol {
     }
 }
 
-class MockQueryNotificationCenterItemsService: QueryNotificationCenterItemsServiceProtocol {
+class MockQueryNotificationCenterItemsService: NotificationCenterQueryService {
     var mockItems: [NotificationCenterItem] = []
 
     func queryNotificationCenterItems() -> [NotificationCenterItem] {

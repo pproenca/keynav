@@ -20,6 +20,15 @@ final class ScrollMode: Mode {
     private let pageScrollAmount: CGFloat = 300
     private var waitingForSecondG = false
 
+    // Scroll direction mappings: (deltaX, deltaY)
+    private var scrollMappings: [String: (CGFloat, CGFloat)] {
+        [
+            "h": (scrollAmount, 0), "j": (0, -scrollAmount),
+            "k": (0, scrollAmount), "l": (-scrollAmount, 0),
+            "d": (0, -pageScrollAmount), "u": (0, pageScrollAmount),
+        ]
+    }
+
     func activate() {
         guard !isActive else { return }
         isActive = true
@@ -44,52 +53,41 @@ final class ScrollMode: Mode {
     func handleKeyDown(_ event: NSEvent) -> Bool {
         guard isActive else { return false }
 
-        let keyCode = event.keyCode
-
         // Escape to cancel
-        if keyCode == 53 {
+        if event.keyCode == 53 {
             deactivate()
             return true
         }
 
         guard let chars = event.charactersIgnoringModifiers?.lowercased() else { return false }
 
-        switch chars {
-        case "h":
-            scroll(deltaX: scrollAmount, deltaY: 0)
+        // Handle scroll direction keys
+        if let (deltaX, deltaY) = scrollMappings[chars] {
+            scroll(deltaX: deltaX, deltaY: deltaY)
             return true
-        case "j":
-            scroll(deltaX: 0, deltaY: -scrollAmount)
+        }
+
+        // Handle "g" key separately (go to top/bottom)
+        if chars == "g" {
+            handleGKey(event: event)
             return true
-        case "k":
-            scroll(deltaX: 0, deltaY: scrollAmount)
-            return true
-        case "l":
-            scroll(deltaX: -scrollAmount, deltaY: 0)
-            return true
-        case "d":
-            scroll(deltaX: 0, deltaY: -pageScrollAmount)
-            return true
-        case "u":
-            scroll(deltaX: 0, deltaY: pageScrollAmount)
-            return true
-        case "g":
-            if waitingForSecondG {
-                scrollToTop()
-                waitingForSecondG = false
-            } else if event.modifierFlags.contains(.shift) {
-                scrollToBottom()
-            } else {
-                waitingForSecondG = true
-                // Reset after delay if no second g
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                    self?.waitingForSecondG = false
-                }
-            }
-            return true
-        default:
+        }
+
+        waitingForSecondG = false
+        return false
+    }
+
+    private func handleGKey(event: NSEvent) {
+        if waitingForSecondG {
+            scrollToTop()
             waitingForSecondG = false
-            return false
+        } else if event.modifierFlags.contains(.shift) {
+            scrollToBottom()
+        } else {
+            waitingForSecondG = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.waitingForSecondG = false
+            }
         }
     }
 
@@ -105,7 +103,8 @@ final class ScrollMode: Mode {
         let axApp = AXUIElementCreateApplication(app.processIdentifier)
 
         guard let window = AXHelpers.getElement(from: axApp, attribute: kAXFocusedWindowAttribute as CFString),
-              let frame = AXHelpers.getFrame(from: window) else { return }
+            let frame = AXHelpers.getFrame(from: window)
+        else { return }
 
         currentScrollArea = frame
         showScrollIndicator()

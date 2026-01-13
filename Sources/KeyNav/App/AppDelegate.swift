@@ -58,20 +58,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Preferences...", action: #selector(openPreferences), keyEquivalent: ","))
 
         // Check for Updates
-        let updateItem = NSMenuItem(title: "Check for Updates...", action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "")
+        let checkForUpdatesAction = #selector(SPUStandardUpdaterController.checkForUpdates(_:))
+        let updateItem = NSMenuItem(title: "Check for Updates...", action: checkForUpdatesAction, keyEquivalent: "")
         updateItem.target = updaterController
         menu.addItem(updateItem)
 
         // Troubleshoot (shown when there are issues)
         if AppStatus.shared.hasAnyFailure {
-            let troubleshootItem = NSMenuItem(title: "Troubleshoot...", action: #selector(openTroubleshoot), keyEquivalent: "")
+            let troubleshootAction = #selector(openTroubleshoot)
+            let troubleshootItem = NSMenuItem(title: "Troubleshoot...", action: troubleshootAction, keyEquivalent: "")
             menu.addItem(troubleshootItem)
         }
 
         menu.addItem(NSMenuItem.separator())
 
         // Quit
-        menu.addItem(NSMenuItem(title: "Quit KeyNav", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        let quitAction = #selector(NSApplication.terminate(_:))
+        menu.addItem(NSMenuItem(title: "Quit KeyNav", action: quitAction, keyEquivalent: "q"))
 
         self.statusItem?.menu = menu
     }
@@ -164,14 +167,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         view.addSubview(titleLabel)
 
         // Description
-        let label = NSTextField(labelWithString: "This allows KeyNav to detect and click UI elements using keyboard shortcuts.")
+        let descText = "This allows KeyNav to detect and click UI elements using keyboard shortcuts."
+        let label = NSTextField(labelWithString: descText)
         label.frame = NSRect(x: 20, y: 85, width: 410, height: 40)
         label.alignment = .center
         label.lineBreakMode = .byWordWrapping
         view.addSubview(label)
 
         // Open Settings button
-        let button = NSButton(title: "Open System Settings", target: self, action: #selector(openAccessibilityPreferences))
+        let openPrefsAction = #selector(openAccessibilityPreferences)
+        let button = NSButton(title: "Open System Settings", target: self, action: openPrefsAction)
         button.frame = NSRect(x: 125, y: 35, width: 200, height: 40)
         button.bezelStyle = .rounded
         button.keyEquivalent = "\r"
@@ -206,7 +211,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.async { [weak self] in
             let alert = NSAlert()
             alert.messageText = "Permission Not Granted"
-            alert.informativeText = "KeyNav is still waiting for Accessibility permission. The app will continue to check for permission in the background.\n\nWould you like to try opening System Settings again?"
+            alert.informativeText = """
+                KeyNav is still waiting for Accessibility permission. \
+                The app will continue to check for permission in the background.
+
+                Would you like to try opening System Settings again?
+                """
             alert.alertStyle = .warning
             alert.addButton(withTitle: "Open System Settings")
             alert.addButton(withTitle: "Keep Waiting")
@@ -303,7 +313,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func showStartupErrorAlert(message: String) {
         let alert = NSAlert()
         alert.messageText = "KeyNav Startup Issue"
-        alert.informativeText = "Some features may not work correctly:\n\n\(message)\n\nYou can try to fix these issues in Preferences."
+        alert.informativeText = """
+            Some features may not work correctly:
+
+            \(message)
+
+            You can try to fix these issues in Preferences.
+            """
         alert.alertStyle = .warning
         alert.addButton(withTitle: "Open Preferences")
         alert.addButton(withTitle: "Continue Anyway")

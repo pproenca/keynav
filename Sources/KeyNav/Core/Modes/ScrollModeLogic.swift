@@ -39,14 +39,8 @@ final class ScrollModeLogic {
     }
 
     func handleKeyCode(_ keyCode: UInt16, characters: String?, modifiers: KeyModifiers = []) -> KeyResult {
-        // Escape (keyCode 53)
-        if keyCode == 53 {
-            waitingForSecondG = false
-            return .deactivate
-        }
-
-        // Ctrl+[ (keyCode 33 with control modifier) - Vim-style escape
-        if keyCode == 33 && modifiers.contains(.control) {
+        // Check for deactivation keys
+        if isDeactivationKey(keyCode: keyCode, modifiers: modifiers) {
             waitingForSecondG = false
             return .deactivate
         }
@@ -58,53 +52,52 @@ final class ScrollModeLogic {
 
         let lowercaseChars = chars.lowercased()
 
-        // Multipliers for reversing scroll directions
-        let hMultiplier: CGFloat = reverseHorizontal ? -1 : 1
-        let vMultiplier: CGFloat = reverseVertical ? -1 : 1
-
-        // Check configured keys (case insensitive for directional keys)
-        if lowercaseChars == keyConfig.left.lowercased() {
+        // Check scroll direction keys
+        if let scrollResult = scrollResultFor(key: lowercaseChars) {
             waitingForSecondG = false
-            return .scroll(deltaX: smallScrollAmount * hMultiplier, deltaY: 0)
-        }
-        if lowercaseChars == keyConfig.down.lowercased() {
-            waitingForSecondG = false
-            return .scroll(deltaX: 0, deltaY: -smallScrollAmount * vMultiplier)
-        }
-        if lowercaseChars == keyConfig.up.lowercased() {
-            waitingForSecondG = false
-            return .scroll(deltaX: 0, deltaY: smallScrollAmount * vMultiplier)
-        }
-        if lowercaseChars == keyConfig.right.lowercased() {
-            waitingForSecondG = false
-            return .scroll(deltaX: -smallScrollAmount * hMultiplier, deltaY: 0)
-        }
-        if lowercaseChars == keyConfig.halfPageDown.lowercased() {
-            waitingForSecondG = false
-            return .scroll(deltaX: 0, deltaY: -pageScrollAmount * vMultiplier)
-        }
-        if lowercaseChars == keyConfig.halfPageUp.lowercased() {
-            waitingForSecondG = false
-            return .scroll(deltaX: 0, deltaY: pageScrollAmount * vMultiplier)
+            return scrollResult
         }
 
         // Handle gg and G specially (case sensitive for toBottom)
         if lowercaseChars == keyConfig.toTop.lowercased() {
-            if waitingForSecondG {
-                waitingForSecondG = false
-                return .scrollToTop
-            } else if chars == keyConfig.toBottom || modifiers.contains(.shift) {
-                // Shift+G or uppercase G
-                waitingForSecondG = false
-                return .scrollToBottom
-            } else {
-                waitingForSecondG = true
-                return .waitingForG
-            }
+            return handleTopBottomKey(chars: chars, modifiers: modifiers)
         }
 
         waitingForSecondG = false
         return .ignored
+    }
+
+    private func isDeactivationKey(keyCode: UInt16, modifiers: KeyModifiers) -> Bool {
+        // Escape (keyCode 53) or Ctrl+[ (keyCode 33 with control modifier)
+        return keyCode == 53 || (keyCode == 33 && modifiers.contains(.control))
+    }
+
+    private func scrollResultFor(key: String) -> KeyResult? {
+        let hMult: CGFloat = reverseHorizontal ? -1 : 1
+        let vMult: CGFloat = reverseVertical ? -1 : 1
+
+        let mappings: [String: KeyResult] = [
+            keyConfig.left.lowercased(): .scroll(deltaX: smallScrollAmount * hMult, deltaY: 0),
+            keyConfig.down.lowercased(): .scroll(deltaX: 0, deltaY: -smallScrollAmount * vMult),
+            keyConfig.up.lowercased(): .scroll(deltaX: 0, deltaY: smallScrollAmount * vMult),
+            keyConfig.right.lowercased(): .scroll(deltaX: -smallScrollAmount * hMult, deltaY: 0),
+            keyConfig.halfPageDown.lowercased(): .scroll(deltaX: 0, deltaY: -pageScrollAmount * vMult),
+            keyConfig.halfPageUp.lowercased(): .scroll(deltaX: 0, deltaY: pageScrollAmount * vMult),
+        ]
+        return mappings[key]
+    }
+
+    private func handleTopBottomKey(chars: String, modifiers: KeyModifiers) -> KeyResult {
+        if waitingForSecondG {
+            waitingForSecondG = false
+            return .scrollToTop
+        } else if chars == keyConfig.toBottom || modifiers.contains(.shift) {
+            waitingForSecondG = false
+            return .scrollToBottom
+        } else {
+            waitingForSecondG = true
+            return .waitingForG
+        }
     }
 
     /// Called when waiting for second 'g' times out

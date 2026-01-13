@@ -15,7 +15,7 @@ final class HintTextField: NSTextField {
     override func keyDown(with event: NSEvent) {
         // Ask delegate if this key should be consumed (for hint selection)
         if let hintDelegate = hintDelegate, hintDelegate.hintTextField(self, shouldConsumeKeyEvent: event) {
-            return // Don't pass to super - event consumed
+            return  // Don't pass to super - event consumed
         }
 
         // Otherwise, handle normally

@@ -21,7 +21,9 @@ enum Strings {
 
     enum App {
         static let name = NSLocalizedString("app.name", value: "KeyNav", comment: "Application name")
-        static let setupTitle = NSLocalizedString("app.setup.title", value: "KeyNav Setup", comment: "Setup window title")
+        static let setupTitle = NSLocalizedString(
+            "app.setup.title", value: "KeyNav Setup", comment: "Setup window title"
+        )
         static let accessibilityRequired = NSLocalizedString(
             "app.accessibility.required",
             value: "KeyNav needs accessibility access to detect UI elements.",

@@ -38,6 +38,14 @@ final class Configuration {
         self.defaults = defaults
     }
 
+    private func postConfigurationChange(for key: Key) {
+        NotificationCenter.default.post(
+            name: .configurationDidChange,
+            object: self,
+            userInfo: ["key": key.rawValue]
+        )
+    }
+
     // MARK: - Hint Preferences
 
     /// The characters used for hint labels.
@@ -48,7 +56,7 @@ final class Configuration {
         }
         set {
             defaults.set(newValue, forKey: Key.hintCharacters.rawValue)
-            NotificationCenter.default.post(name: .configurationDidChange, object: self, userInfo: ["key": Key.hintCharacters.rawValue])
+            postConfigurationChange(for: .hintCharacters)
         }
     }
 
@@ -61,7 +69,7 @@ final class Configuration {
         }
         set {
             defaults.set(Double(newValue), forKey: Key.hintTextSize.rawValue)
-            NotificationCenter.default.post(name: .configurationDidChange, object: self, userInfo: ["key": Key.hintTextSize.rawValue])
+            postConfigurationChange(for: .hintTextSize)
         }
     }
 
@@ -87,7 +95,7 @@ final class Configuration {
         }
         set {
             defaults.set(newValue, forKey: Key.launchAtLogin.rawValue)
-            NotificationCenter.default.post(name: .configurationDidChange, object: self, userInfo: ["key": Key.launchAtLogin.rawValue])
+            postConfigurationChange(for: .launchAtLogin)
         }
     }
 
@@ -102,7 +110,7 @@ final class Configuration {
         }
         set {
             defaults.set(newValue, forKey: Key.showMenuBarIcon.rawValue)
-            NotificationCenter.default.post(name: .configurationDidChange, object: self, userInfo: ["key": Key.showMenuBarIcon.rawValue])
+            postConfigurationChange(for: .showMenuBarIcon)
         }
     }
 

@@ -15,7 +15,8 @@ struct ScrollKeyPrefs: Codable, Equatable {
 
     /// Parsed array of keys
     var keys: [String] {
-        return keyString
+        return
+            keyString
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
     }
@@ -24,7 +25,8 @@ struct ScrollKeyPrefs: Codable, Equatable {
     /// - Parameter keyString: Comma-separated key string
     /// - Returns: True if valid (4, 6, or 8 unique keys)
     static func isValid(_ keyString: String) -> Bool {
-        let keys = keyString
+        let keys =
+            keyString
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
 

@@ -10,8 +10,8 @@ struct ScrollKeyConfig: Codable, Equatable {
     let right: String
     let halfPageDown: String
     let halfPageUp: String
-    let toTop: String    // 'g' for gg
-    let toBottom: String // 'G' (Shift+G)
+    let toTop: String  // 'g' for gg
+    let toBottom: String  // 'G' (Shift+G)
 
     /// Default Vim-style configuration
     init(

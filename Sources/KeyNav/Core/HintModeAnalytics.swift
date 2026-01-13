@@ -28,7 +28,7 @@ final class HintModeAnalytics {
         }
 
         #if DEBUG
-        print("[Analytics] Deadend: '\(typedSequence)' (total: \(deadendCount))")
+            print("[Analytics] Deadend: '\(typedSequence)' (total: \(deadendCount))")
         #endif
     }
 

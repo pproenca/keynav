@@ -82,18 +82,13 @@ final class AppStatus: ObservableObject {
     // MARK: - Computed Properties
 
     var isFullyOperational: Bool {
-        permissionStatus.isOperational &&
-        hintModeHotkeyStatus.isOperational &&
-        scrollModeHotkeyStatus.isOperational &&
-        searchModeHotkeyStatus.isOperational
+        permissionStatus.isOperational && hintModeHotkeyStatus.isOperational && scrollModeHotkeyStatus.isOperational
+            && searchModeHotkeyStatus.isOperational
     }
 
     var hasAnyFailure: Bool {
-        permissionStatus.isFailed ||
-        hintModeHotkeyStatus.isFailed ||
-        scrollModeHotkeyStatus.isFailed ||
-        searchModeHotkeyStatus.isFailed ||
-        eventTapStatus.isFailed
+        permissionStatus.isFailed || hintModeHotkeyStatus.isFailed || scrollModeHotkeyStatus.isFailed
+            || searchModeHotkeyStatus.isFailed || eventTapStatus.isFailed
     }
 
     var failureSummary: String? {
@@ -222,7 +217,12 @@ final class AppStatus: ObservableObject {
         DispatchQueue.main.async {
             let alert = NSAlert()
             alert.messageText = "Accessibility Permission Required"
-            alert.informativeText = "KeyNav needs Accessibility permission to detect UI elements and respond to keyboard shortcuts.\n\nPlease grant permission in System Settings > Privacy & Security > Accessibility."
+            alert.informativeText = """
+                KeyNav needs Accessibility permission to detect UI elements \
+                and respond to keyboard shortcuts.
+
+                Please grant permission in System Settings > Privacy & Security > Accessibility.
+                """
             alert.alertStyle = .warning
             alert.addButton(withTitle: "Open System Settings")
             alert.addButton(withTitle: "Later")

@@ -1,6 +1,6 @@
+import AppKit
 // Sources/KeyNav/Accessibility/AccessibilityEngine.swift
 import ApplicationServices
-import AppKit
 
 final class AccessibilityEngine {
     private let traversal = ElementTraversal()
@@ -23,7 +23,7 @@ final class AccessibilityEngine {
 
         // Debug: print accessibility hierarchy (only in debug builds)
         #if DEBUG
-        AccessibilityDebug.printFocusedElementHierarchy()
+            AccessibilityDebug.printFocusedElementHierarchy()
         #endif
 
         var allElements: [ActionableElement] = []
@@ -76,7 +76,8 @@ final class AccessibilityEngine {
         // Remove duplicates based on frame (same position = same element)
         var seen = Set<String>()
         allElements = allElements.filter { element in
-            let key = "\(element.frame.origin.x),\(element.frame.origin.y),\(element.frame.width),\(element.frame.height)"
+            let frame = element.frame
+            let key = "\(frame.origin.x),\(frame.origin.y),\(frame.width),\(frame.height)"
             if seen.contains(key) {
                 return false
             }
@@ -103,7 +104,8 @@ final class AccessibilityEngine {
 
                 var windowsRef: CFTypeRef?
                 guard AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef) == .success,
-                      let windows = windowsRef as? [AXUIElement] else { continue }
+                    let windows = windowsRef as? [AXUIElement]
+                else { continue }
 
                 for window in windows {
                     let elements = self.traversal.traverseElements(from: window)
@@ -145,8 +147,12 @@ final class AccessibilityEngine {
     }
 
     private func simulateClick(at point: CGPoint, clickCount: Int = 1) {
-        let mouseDown = CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: point, mouseButton: .left)
-        let mouseUp = CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left)
+        let mouseDown = CGEvent(
+            mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: point, mouseButton: .left
+        )
+        let mouseUp = CGEvent(
+            mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left
+        )
 
         mouseDown?.setIntegerValueField(.mouseEventClickState, value: Int64(clickCount))
         mouseUp?.setIntegerValueField(.mouseEventClickState, value: Int64(clickCount))
@@ -156,8 +162,12 @@ final class AccessibilityEngine {
     }
 
     private func simulateRightClick(at point: CGPoint) {
-        let mouseDown = CGEvent(mouseEventSource: nil, mouseType: .rightMouseDown, mouseCursorPosition: point, mouseButton: .right)
-        let mouseUp = CGEvent(mouseEventSource: nil, mouseType: .rightMouseUp, mouseCursorPosition: point, mouseButton: .right)
+        let mouseDown = CGEvent(
+            mouseEventSource: nil, mouseType: .rightMouseDown, mouseCursorPosition: point, mouseButton: .right
+        )
+        let mouseUp = CGEvent(
+            mouseEventSource: nil, mouseType: .rightMouseUp, mouseCursorPosition: point, mouseButton: .right
+        )
 
         mouseDown?.post(tap: .cghidEventTap)
         mouseUp?.post(tap: .cghidEventTap)

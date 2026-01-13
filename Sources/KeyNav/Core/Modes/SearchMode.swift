@@ -201,12 +201,12 @@ final class SearchResultsView: NSView {
             scrollView.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 16),
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
             scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
-            scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8)
+            scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8),
         ])
     }
 
     func updateResults(_ elements: [ActionableElement]) {
-        results = Array(elements.prefix(50)) // Limit to 50 results
+        results = Array(elements.prefix(50))  // Limit to 50 results
         selectedIndex = 0
         tableView.reloadData()
         if !results.isEmpty {
@@ -237,7 +237,7 @@ extension SearchResultsView: NSTableViewDelegate {
         cell.addSubview(textField)
         NSLayoutConstraint.activate([
             textField.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 8),
-            textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+            textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
         ])
 
         return cell

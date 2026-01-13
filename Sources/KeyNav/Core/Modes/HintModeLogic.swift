@@ -41,7 +41,7 @@ final class HintModeLogic {
             switch (lhs, rhs) {
             case (.ignored, .ignored), (.handled, .handled), (.deactivate, .deactivate):
                 return true
-            case let (.selectElement(e1, c1), .selectElement(e2, c2)):
+            case (.selectElement(let e1, let c1), .selectElement(let e2, let c2)):
                 return e1 == e2 && c1 == c2
             default:
                 return false
@@ -101,9 +101,10 @@ final class HintModeLogic {
 
             // Only select if there's exactly ONE match and it's an exact match
             if possibleMatches.count == 1,
-               let index = hintLabels.firstIndex(of: possibleMatches[0]),
-               index < filteredElements.count,
-               possibleMatches[0] == typedHintChars {
+                let index = hintLabels.firstIndex(of: possibleMatches[0]),
+                index < filteredElements.count,
+                possibleMatches[0] == typedHintChars
+            {
                 let element = filteredElements[index]
                 let clickType = determineClickType(from: modifiers)
                 return .selectElement(element, clickType)

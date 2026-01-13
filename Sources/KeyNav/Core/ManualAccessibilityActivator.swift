@@ -3,8 +3,8 @@ import Foundation
 
 /// Methods for manual accessibility activation
 enum ActivationMethod: Equatable {
-    case keyboard      // Use keyboard event simulation
-    case accessibility // Use accessibility API
+    case keyboard  // Use keyboard event simulation
+    case accessibility  // Use accessibility API
 }
 
 /// Fallback activation method when primary activation fails

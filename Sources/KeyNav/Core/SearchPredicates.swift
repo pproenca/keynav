@@ -27,11 +27,14 @@ struct SearchPredicates {
     private let categoryRoles: [SearchCategory: Set<String>] = [
         .buttons: ["AXButton", "AXPopUpButton", "AXMenuButton"],
         .checkboxes: ["AXCheckBox"],
-        .controls: ["AXButton", "AXCheckBox", "AXRadioButton", "AXTextField", "AXTextArea", "AXPopUpButton", "AXSlider", "AXComboBox"],
+        .controls: [
+            "AXButton", "AXCheckBox", "AXRadioButton", "AXTextField",
+            "AXTextArea", "AXPopUpButton", "AXSlider", "AXComboBox",
+        ],
         .graphics: ["AXImage", "AXIcon"],
         .links: ["AXLink"],
         .radioGroups: ["AXRadioGroup", "AXRadioButton"],
-        .textFields: ["AXTextField", "AXTextArea", "AXComboBox", "AXSearchField"]
+        .textFields: ["AXTextField", "AXTextArea", "AXComboBox", "AXSearchField"],
     ]
 
     /// Get roles for a single category
@@ -61,11 +64,9 @@ struct SearchResultDeduplicator<T: SearchableElement> {
         var seen = Set<String>()
         var result = [T]()
 
-        for element in elements {
-            if !seen.contains(element.identifier) {
-                seen.insert(element.identifier)
-                result.append(element)
-            }
+        for element in elements where !seen.contains(element.identifier) {
+            seen.insert(element.identifier)
+            result.append(element)
         }
 
         return result

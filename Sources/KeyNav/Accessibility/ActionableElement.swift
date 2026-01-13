@@ -1,6 +1,6 @@
+import ApplicationServices
 // Sources/KeyNav/Accessibility/ActionableElement.swift
 import Foundation
-import ApplicationServices
 
 struct ActionableElement: Equatable {
     let axElement: AXUIElement?
@@ -36,10 +36,7 @@ struct ActionableElement: Equatable {
     }
 
     static func == (lhs: ActionableElement, rhs: ActionableElement) -> Bool {
-        lhs.role == rhs.role &&
-        lhs.label == rhs.label &&
-        lhs.frame == rhs.frame &&
-        lhs.actions == rhs.actions &&
-        lhs.identifier == rhs.identifier
+        lhs.role == rhs.role && lhs.label == rhs.label && lhs.frame == rhs.frame && lhs.actions == rhs.actions
+            && lhs.identifier == rhs.identifier
     }
 }

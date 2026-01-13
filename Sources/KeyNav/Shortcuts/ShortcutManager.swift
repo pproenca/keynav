@@ -1,6 +1,6 @@
+import AppKit
 // Sources/KeyNav/Shortcuts/ShortcutManager.swift
 import Foundation
-import AppKit
 import HotKey
 
 final class ShortcutManager {
@@ -11,7 +11,13 @@ final class ShortcutManager {
     private let accessibilityEngine = AccessibilityEngine()
 
     private let storageURL: URL = {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard
+            let appSupport = FileManager.default.urls(
+                for: .applicationSupportDirectory, in: .userDomainMask
+            ).first
+        else {
+            fatalError("Unable to locate Application Support directory")
+        }
         let keynavDir = appSupport.appendingPathComponent("KeyNav", isDirectory: true)
         try? FileManager.default.createDirectory(at: keynavDir, withIntermediateDirectories: true)
         return keynavDir.appendingPathComponent("shortcuts.json")
@@ -97,7 +103,8 @@ final class ShortcutManager {
 
             // Primary: match by identifier
             if let identifier = sig.identifier,
-               let element = elements.first(where: { $0.identifier == identifier }) {
+                let element = elements.first(where: { $0.identifier == identifier })
+            {
                 self.performAction(shortcut.action, on: element)
                 return
             }

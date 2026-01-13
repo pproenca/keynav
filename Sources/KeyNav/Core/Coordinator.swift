@@ -122,7 +122,7 @@ final class Coordinator {
             guard let self = self, let mode = self.currentMode else { return event }
 
             if mode.handleKeyDown(event) {
-                return nil // Event handled
+                return nil  // Event handled
             }
             return event
         }
