@@ -9,28 +9,23 @@ final class HintViewStyleTests: XCTestCase {
     func testHintViewHasDefaultMatchedTextColor() {
         let hintView = HintView(frame: .zero)
 
-        // Matched text should be golden brown: RGB(212, 172, 58)
-        let expectedColor = NSColor(calibratedRed: 212/255.0, green: 172/255.0, blue: 58/255.0, alpha: 1.0)
-
+        // Matched text should use AppearanceColors.hintMatchedText (appearance-aware)
         XCTAssertNotNil(hintView.hintMatchedTextColor)
-        // Compare color components (colors may not be directly equal due to color space)
-        assertColorsEqual(hintView.hintMatchedTextColor, expectedColor)
+        XCTAssertEqual(hintView.hintMatchedTextColor, AppearanceColors.hintMatchedText)
     }
 
     func testHintViewHasDefaultUnmatchedTextColor() {
         let hintView = HintView(frame: .zero)
 
-        // Unmatched text should be black
-        XCTAssertEqual(hintView.hintTextColor, NSColor.black)
+        // Unmatched text should use AppearanceColors.hintText (appearance-aware)
+        XCTAssertEqual(hintView.hintTextColor, AppearanceColors.hintText)
     }
 
     func testHintViewHasDefaultBackgroundColor() {
         let hintView = HintView(frame: .zero)
 
-        // Background should be pale yellow: RGB(255, 224, 112)
-        let expectedColor = NSColor(calibratedRed: 255/255.0, green: 224/255.0, blue: 112/255.0, alpha: 1.0)
-
-        assertColorsEqual(hintView.hintBackgroundColor, expectedColor)
+        // Background should use AppearanceColors.hintBackground (appearance-aware)
+        XCTAssertEqual(hintView.hintBackgroundColor, AppearanceColors.hintBackground)
     }
 
     func testHintViewHasDefaultBorderWidth() {
@@ -78,18 +73,4 @@ final class HintViewStyleTests: XCTestCase {
         XCTAssertEqual(String(label[viewModel.matchedRange!]), "AS")
     }
 
-    // MARK: - Helper
-
-    private func assertColorsEqual(_ color1: NSColor, _ color2: NSColor, tolerance: CGFloat = 0.01, file: StaticString = #file, line: UInt = #line) {
-        // Convert to calibrated RGB color space for comparison
-        guard let c1 = color1.usingColorSpace(.sRGB),
-              let c2 = color2.usingColorSpace(.sRGB) else {
-            XCTFail("Could not convert colors to sRGB", file: file, line: line)
-            return
-        }
-
-        XCTAssertEqual(c1.redComponent, c2.redComponent, accuracy: tolerance, "Red components differ", file: file, line: line)
-        XCTAssertEqual(c1.greenComponent, c2.greenComponent, accuracy: tolerance, "Green components differ", file: file, line: line)
-        XCTAssertEqual(c1.blueComponent, c2.blueComponent, accuracy: tolerance, "Blue components differ", file: file, line: line)
-    }
 }
